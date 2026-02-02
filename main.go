@@ -4,6 +4,8 @@ import (
 	"log"
 
 	"github.com/badAkne/catalog-service/internal/app/config"
+	rhealth "github.com/badAkne/catalog-service/internal/app/handler/health"
+	rprocessor "github.com/badAkne/catalog-service/internal/app/processor/http"
 )
 
 func main() {
@@ -11,14 +13,11 @@ func main() {
 
 	cfg := config.Root
 
-	log.Printf("Server will start on port: %d", cfg.Processor.WebServer.ListenPort)
-	log.Printf("Database: %s@%s/%s %d %d",
-		cfg.Repository.Postgres.Username,
-		cfg.Repository.Postgres.Address,
-		cfg.Repository.Postgres.Name,
-		cfg.Repository.Postgres.ReadTimeout,
-		cfg.Repository.Postgres.WriteTimeout)
-	log.Printf("Environment: %s, LogLevel: %s",
-		cfg.Monitor.Environment,
-		cfg.Monitor.LogLevel)
+	hHandler := rhealth.NewHandler()
+
+	proc := rprocessor.NewHttp(hHandler, cfg.Processor.WebServer)
+
+	if err := proc.Serve(); err != nil {
+		log.Fatal(err)
+	}
 }
