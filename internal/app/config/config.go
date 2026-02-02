@@ -3,10 +3,9 @@ package config
 import (
 	"log"
 
+	"github.com/badAkne/catalog-service/internal/app/config/section"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
-
-	"github.com/badAkne/catalog-service/internal/app/config/section"
 )
 
 type Config struct {
