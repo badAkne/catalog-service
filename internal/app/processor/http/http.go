@@ -1,9 +1,9 @@
 package rprocessor
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/badAkne/catalog-service/internal/app/config/section"
 	rhandler "github.com/badAkne/catalog-service/internal/app/handler"
@@ -22,39 +22,28 @@ func NewHttp(hHealth rhandler.Health, cfg section.ProcessorWebServer) *httpProc 
 
 	vGenericRegHealthCheck(r, hHealth)
 
-	err := r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+	_ = r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 
-		tpl, err := route.GetPathTemplate()
+		path, _ := route.GetPathTemplate()
 
-		if err != nil {
-			return err
+		methods, _ := route.GetMethods()
+
+		if path == "" && len(methods) == 0 {
+			return nil
 		}
 
-		met, err := route.GetMethods()
-
-		if err != nil {
-			return err
-		}
-
-		log.Printf("%s\n%s\n", tpl, met)
+		log.Printf("path:%s\nmethods:%s\nRegistered API route", path, methods)
 
 		return nil
 	})
 
-	if err != nil {
-		log.Printf("%v", err)
-	}
-
 	s := httpProc{
 		server: http.Server{
-			ReadTimeout:       3 * time.Second,
-			WriteTimeout:      6 * time.Second,
 			Handler:           r,
-			Addr:              cfg.ListenPort,
-			IdleTimeout:       15 * time.Second,
-			ReadHeaderTimeout: 3 * time.Second,
+			Addr:              fmt.Sprintf(":%d", cfg.ListenPort),
+			ReadHeaderTimeout: cfg.ReadHeaderTimeout,
 		},
-		addr: cfg.ListenPort,
+		addr: fmt.Sprintf(":%d", cfg.ListenPort),
 	}
 
 	return &s
