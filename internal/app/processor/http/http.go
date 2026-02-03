@@ -1,0 +1,55 @@
+package rprocessor
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/badAkne/catalog-service/internal/app/config/section"
+	rhandler "github.com/badAkne/catalog-service/internal/app/handler"
+	"github.com/gorilla/mux"
+)
+
+type httpProc struct {
+	server http.Server
+	addr   string
+}
+
+func NewHttp(hHealth rhandler.Health, cfg section.ProcessorWebServer) *httpProc {
+	r := mux.NewRouter()
+
+	r.NotFoundHandler = http.HandlerFunc(handlerNotFound)
+
+	vGenericRegHealthCheck(r, hHealth)
+
+	_ = r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+
+		path, _ := route.GetPathTemplate()
+
+		methods, _ := route.GetMethods()
+
+		if path == "" && len(methods) == 0 {
+			return nil
+		}
+
+		log.Printf("path:%s\nmethods:%s\nRegistered API route", path, methods)
+
+		return nil
+	})
+
+	s := httpProc{
+		server: http.Server{
+			Handler:           r,
+			Addr:              fmt.Sprintf(":%d", cfg.ListenPort),
+			ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+		},
+		addr: fmt.Sprintf(":%d", cfg.ListenPort),
+	}
+
+	return &s
+}
+
+func (h *httpProc) Serve() error {
+	err := h.server.ListenAndServe()
+	return err
+}
