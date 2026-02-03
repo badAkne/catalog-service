@@ -17,7 +17,10 @@ func main() {
 
 	cfg := config.Root
 
-	_, _ = rcpostgres.NewConn(ctx, cfg.Repository.Postgres)
+	_, err := rcpostgres.NewConn(ctx, cfg.Repository.Postgres)
+	if err != nil {
+		log.Printf("%s", err.Error())
+	}
 
 	hHandler := rhealth.NewHandler()
 

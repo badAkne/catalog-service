@@ -64,7 +64,8 @@ func createDSN(cfg section.RepositoryPostgres) url.URL {
 
 	dsn.Scheme = "Postgres"
 	dsn.Host = cfg.Address
-	dsn.User = url.UserPassword(cfg.Address, cfg.Password)
+	dsn.User = url.UserPassword(cfg.Username, cfg.Password)
+	dsn.Path = cfg.Name
 
 	args := make(url.Values)
 
