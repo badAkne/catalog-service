@@ -1,0 +1,28 @@
+# docker-compose.yml
+
+services:
+  # ---------------------------------------------------------------------------- #
+
+  postgres:
+    ports:
+      - '5429:5432'
+    container_name: 'catalog_postgres'
+    # https://hub.docker.com/_/postgres
+    image: 'postgres:15.1-alpine'
+    restart: 'unless-stopped'
+    environment:
+      POSTGRES_USER: 'your_username'
+      POSTGRES_PASSWORD: 'your_password'
+      POSTGRES_DB: 'your_db'
+    volumes:
+      - 'catalog_postgres_data:/var/lib/postgresql/data'
+    networks:
+      - 'catalog_net'
+
+  # ---------------------------------------------------------------------------- #
+
+volumes:
+  catalog_postgres_data: {}
+
+networks:
+  catalog_net: {}
