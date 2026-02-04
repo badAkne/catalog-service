@@ -30,7 +30,18 @@ func (c *Client) GetRawBunDB() *bun.DB {
 }
 
 func NewConn(ctx context.Context, cfg section.RepositoryPostgres) (*Client, error) {
-	dsn := createDSN(cfg)
+	var dsn url.URL
+
+	dsn.Scheme = "Postgres"
+	dsn.Host = cfg.Address
+	dsn.User = url.UserPassword(cfg.Username, cfg.Password)
+	dsn.Path = cfg.Name
+
+	args := make(url.Values)
+
+	args.Set("sslmode", "disable")
+
+	dsn.RawQuery = args.Encode()
 
 	log.Printf("Write Timeout:%s\nRead Timeout:%s", cfg.WriteTimeout.String(), cfg.ReadTimeout.String())
 
@@ -57,21 +68,4 @@ func NewConn(ctx context.Context, cfg section.RepositoryPostgres) (*Client, erro
 		rawBunDB: rawBunDB,
 		cfg:      cfg,
 	}, nil
-}
-
-func createDSN(cfg section.RepositoryPostgres) url.URL {
-	var dsn url.URL
-
-	dsn.Scheme = "Postgres"
-	dsn.Host = cfg.Address
-	dsn.User = url.UserPassword(cfg.Username, cfg.Password)
-	dsn.Path = cfg.Name
-
-	args := make(url.Values)
-
-	args.Set("sslmode", "disable")
-
-	dsn.RawQuery = args.Encode()
-
-	return dsn
 }
