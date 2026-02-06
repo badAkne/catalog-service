@@ -76,7 +76,7 @@ func NewConn(ctx context.Context, cfg section.RepositoryPostgres) (*Client, erro
 func (c *Client) Migrate(ctx context.Context) (oldVer, newVer int64, err error) {
 	migrations := migrate.NewMigrations()
 
-	err = migrations.Discover(migration.FS)
+	err = migrations.Discover(migration.Postgres)
 	if err != nil {
 		return 0, 0, fmt.Errorf("unable to get migrations: %w", err)
 	}
@@ -99,7 +99,7 @@ func (c *Client) Migrate(ctx context.Context) (oldVer, newVer int64, err error) 
 		return 0, 0, fmt.Errorf("unable to get applied migrations:%w", err)
 	}
 
-	if !applied.LastGroup().IsZero() {
+	if len(applied) > 0 {
 		oldVer, err = strconv.ParseInt(applied[0].Name, 10, 64)
 		if err != nil {
 			return 0, 0, fmt.Errorf("unable to parse int: %w", err)
