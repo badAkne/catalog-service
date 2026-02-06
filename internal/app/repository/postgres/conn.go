@@ -113,7 +113,7 @@ func (c *Client) Migrate(ctx context.Context) (oldVer, newVer int64, err error) 
 
 	if !mgg.IsZero() {
 		for _, mig := range mgg.Migrations {
-			newVer = max(newVer, int64(mig.ID))
+			newVer = max(newVer, mig.ID)
 		}
 	} else {
 		newVer = oldVer
