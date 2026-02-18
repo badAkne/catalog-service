@@ -107,18 +107,17 @@ func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res, err := h.serviceProduct.Update(r.Context(), guid, *req)
-	if err != nil {
-		if errors.Is(err, util.ErrProductAlreadyExists) {
-			http.Error(w, "Товар с таким названием уже существует", http.StatusConflict)
-			return
-		} else if errors.Is(err, util.ErrProductNotFound) {
-			http.Error(w, "Категория не найдена", http.StatusNotFound)
-			return
-		} else if errors.Is(err, util.ErrProductNotFound) {
-			http.Error(w, "Товар не найден", http.StatusNotFound)
-			return
-		}
-
+	switch {
+	case errors.Is(err, util.ErrProductAlreadyExists):
+		http.Error(w, "Товар с таким названием уже существует", http.StatusConflict)
+		return
+	case errors.Is(err, util.ErrCategoryNotFound):
+		http.Error(w, "Категория не найдена", http.StatusNotFound)
+		return
+	case errors.Is(err, util.ErrProductNotFound):
+		http.Error(w, "Товар не найден", http.StatusNotFound)
+		return
+	case err != nil:
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
