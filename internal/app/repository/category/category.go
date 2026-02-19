@@ -2,12 +2,15 @@ package pcategory
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/badAkne/catalog-service/internal/app/entity"
 	"github.com/badAkne/catalog-service/internal/app/repository"
-	rcpostgres "github.com/badAkne/catalog-service/internal/app/repository/postgres"
+	rcpostgres "github.com/badAkne/catalog-service/internal/app/repository/conn/postgres"
 	"github.com/google/uuid"
+	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 type (
@@ -35,10 +38,28 @@ func (r *repoPG) Get(ctx context.Context, guid uuid.UUID) (entity.Category, erro
 	category := new(entity.Category)
 	err := r.NewSelect().Model(category).Where("guid = ?", guid).Scan(ctx)
 	if err != nil {
+		if errors.Is(errors.Unwrap(err), sql.ErrNoRows) {
+			return entity.Category{}, entity.ErrNotFound
+		}
+
 		return *category, fmt.Errorf("unable to get category,%w", err)
 	}
 
 	return *category, nil
+}
+
+func (r *repoPG) IsExistWithName(ctx context.Context, name string) error {
+	category := new(entity.Category)
+	err := r.NewSelect().Model(category).Where("name = ?", name).Scan(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to check does category exist with name: %w", err)
+	}
+
+	if category.GUID != uuid.Nil {
+		return entity.ErrCategoryAlreadyExists
+	}
+
+	return nil
 }
 
 func (r *repoPG) GetList(ctx context.Context) ([]entity.Category, error) {
@@ -58,6 +79,11 @@ func (r *repoPG) Update(ctx context.Context, guid uuid.UUID, name string) (entit
 
 	_, err := r.NewUpdate().Model(&category).Set("name = ?, updated_at = NOW()", name).Where("guid = ?", guid).Returning("*").Exec(ctx)
 	if err != nil {
+		var pgErr pgdriver.Error
+		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
+			return entity.Category{}, entity.ErrCategoryAlreadyExists
+		}
+
 		return entity.Category{}, fmt.Errorf("unable to update category: %w", err)
 	}
 

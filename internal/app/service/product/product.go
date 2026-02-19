@@ -2,7 +2,6 @@ package mproduct
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"math"
@@ -10,7 +9,6 @@ import (
 	"github.com/badAkne/catalog-service/internal/app/entity"
 	"github.com/badAkne/catalog-service/internal/app/repository"
 	rservice "github.com/badAkne/catalog-service/internal/app/service"
-	"github.com/badAkne/catalog-service/internal/app/util"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun/driver/pgdriver"
 )
@@ -26,6 +24,10 @@ func NewService(repoProduct repository.Product) rservice.Product {
 }
 
 func (s *service) Create(ctx context.Context, req entity.RequestProductCreate) (entity.ResponseProductCreate, error) {
+	if err := s.repoProduct.IsExistWithName(ctx, req.Name); err != nil {
+		return entity.ResponseProductCreate{}, err
+	}
+
 	guid, err := uuid.NewV7()
 	if err != nil {
 		return entity.ResponseProductCreate{}, fmt.Errorf("unable to create guid for product: %w", err)
@@ -34,13 +36,6 @@ func (s *service) Create(ctx context.Context, req entity.RequestProductCreate) (
 	newProduct, err := s.repoProduct.Create(ctx, entity.Product{Name: req.Name, Price: req.Price, CategoryGUID: req.CategoryGUID, Description: req.Description, GUID: guid})
 
 	if err != nil {
-		var pgErr pgdriver.Error
-		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
-			return entity.ResponseProductCreate{}, util.ErrProductAlreadyExists
-		} else if errors.As(err, &pgErr) && pgErr.Field('C') == "23503" {
-			return entity.ResponseProductCreate{}, util.ErrCategoryNotFound
-		}
-
 		return entity.ResponseProductCreate{}, err
 	}
 
@@ -55,13 +50,8 @@ func (s *service) Create(ctx context.Context, req entity.RequestProductCreate) (
 }
 
 func (s *service) Get(ctx context.Context, guid uuid.UUID) (entity.ResponseProductCreate, error) {
-
 	product, err := s.repoProduct.Get(ctx, guid)
 	if err != nil {
-		if errors.Is(errors.Unwrap(err), sql.ErrNoRows) {
-			return entity.ResponseProductCreate{}, util.ErrProductNotFound
-		}
-
 		return entity.ResponseProductCreate{}, err
 	}
 
@@ -118,16 +108,16 @@ func (s *service) Update(ctx context.Context, guid uuid.UUID, req entity.Request
 	if err != nil {
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
-			return entity.ResponseProductCreate{}, util.ErrProductAlreadyExists
+			return entity.ResponseProductCreate{}, entity.ErrProductAlreadyExists
 		}
 
 		return entity.ResponseProductCreate{}, err
 	}
 
 	if product.GUID == uuid.Nil {
-		return entity.ResponseProductCreate{}, util.ErrProductNotFound
+		return entity.ResponseProductCreate{}, entity.ErrNotFound
 	} else if product.CategoryGUID == uuid.Nil {
-		return entity.ResponseProductCreate{}, util.ErrCategoryNotFound
+		return entity.ResponseProductCreate{}, entity.ErrNotFound
 	}
 
 	return entity.ResponseProductCreate{

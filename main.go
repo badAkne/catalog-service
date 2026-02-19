@@ -10,7 +10,7 @@ import (
 	rproduct "github.com/badAkne/catalog-service/internal/app/handler/product"
 	rprocessor "github.com/badAkne/catalog-service/internal/app/processor/http"
 	pcategory "github.com/badAkne/catalog-service/internal/app/repository/category"
-	rcpostgres "github.com/badAkne/catalog-service/internal/app/repository/postgres"
+	rcpostgres "github.com/badAkne/catalog-service/internal/app/repository/conn/postgres"
 	pproduct "github.com/badAkne/catalog-service/internal/app/repository/product"
 	mcategory "github.com/badAkne/catalog-service/internal/app/service/category"
 	mproduct "github.com/badAkne/catalog-service/internal/app/service/product"

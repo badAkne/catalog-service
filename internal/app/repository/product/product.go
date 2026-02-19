@@ -2,12 +2,15 @@ package pproduct
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/badAkne/catalog-service/internal/app/entity"
 	"github.com/badAkne/catalog-service/internal/app/repository"
-	rcpostgres "github.com/badAkne/catalog-service/internal/app/repository/postgres"
+	rcpostgres "github.com/badAkne/catalog-service/internal/app/repository/conn/postgres"
 	"github.com/google/uuid"
+	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 type (
@@ -25,6 +28,13 @@ func NewRepoFromPostgres(_ context.Context, d *rcpostgres.Client) (repository.Pr
 func (r *repoPg) Create(ctx context.Context, product entity.Product) (entity.Product, error) {
 	_, err := r.NewInsert().Model(&product).Returning("guid,name,price,category_guid,description").Exec(ctx)
 	if err != nil {
+		var pgErr pgdriver.Error
+		if errors.Is(err, sql.ErrNoRows) {
+			return entity.Product{}, entity.ErrNotFound
+		} else if errors.As(err, &pgErr) && pgErr.Field('C') == "23503" {
+			return entity.Product{}, entity.ErrNotFound
+		}
+
 		return entity.Product{}, fmt.Errorf("unable to create product: %w", err)
 	}
 
@@ -36,10 +46,28 @@ func (r *repoPg) Get(ctx context.Context, guid uuid.UUID) (entity.Product, error
 
 	err := r.NewSelect().Model(product).Where("guid = ?", guid).Scan(ctx)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entity.Product{}, entity.ErrNotFound
+		}
+
 		return entity.Product{}, fmt.Errorf("unable to get product%w", err)
 	}
 
 	return *product, nil
+}
+
+func (r *repoPg) IsExistWithName(ctx context.Context, name string) error {
+	product := new(entity.Product)
+	err := r.NewSelect().Model(product).Where("name = ?", name).Scan(ctx)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("unable to check does product exist with name: %w", err)
+	}
+
+	if product.GUID != uuid.Nil {
+		return entity.ErrProductAlreadyExists
+	}
+
+	return nil
 }
 
 func (r *repoPg) GetList(ctx context.Context, categoryGUID uuid.UUID, minPrice, maxPrice float32) ([]entity.Product, error) {

@@ -8,7 +8,6 @@ import (
 	"github.com/badAkne/catalog-service/internal/app/entity"
 	rhandler "github.com/badAkne/catalog-service/internal/app/handler"
 	rservice "github.com/badAkne/catalog-service/internal/app/service"
-	"github.com/badAkne/catalog-service/internal/app/util"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
@@ -36,7 +35,7 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 	resCategory, err := h.serviceCategory.Create(r.Context(), reqCategory)
 	if err != nil {
 
-		var serviceErr = util.ErrCategoryAlreadyExists
+		var serviceErr = entity.ErrCategoryAlreadyExists
 		if errors.Is(err, serviceErr) {
 			http.Error(w, "Категория с таким названием уже существует", http.StatusConflict)
 			return
@@ -63,7 +62,7 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 
 	category, err := h.serviceCategory.Get(r.Context(), guid)
 	if err != nil {
-		if errors.Is(err, util.ErrCategoryNotFound) {
+		if errors.Is(err, entity.ErrNotFound) {
 			http.Error(w, "Категория не найдена", http.StatusNotFound)
 			return
 		}
@@ -112,10 +111,10 @@ func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	category, err = h.serviceCategory.Update(r.Context(), guid, category.Name)
 	if err != nil {
-		if errors.Is(err, util.ErrCategoryNotFound) {
+		if errors.Is(err, entity.ErrNotFound) {
 			http.Error(w, "Категория не найдена", http.StatusNotFound)
 			return
-		} else if errors.Is(err, util.ErrCategoryAlreadyExists) {
+		} else if errors.Is(err, entity.ErrCategoryAlreadyExists) {
 			http.Error(w, "Категория с таким названием уже существует", http.StatusConflict)
 			return
 		}
@@ -142,10 +141,10 @@ func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	err = h.serviceCategory.Delete(r.Context(), guid)
 	if err != nil {
-		if errors.Is(err, util.ErrCategoryHasRelation) {
+		if errors.Is(err, entity.ErrCategoryHasRelation) {
 			http.Error(w, "Невозможно удалить категорию: имеются связанные товары", http.StatusConflict)
 			return
-		} else if errors.Is(err, util.ErrCategoryNotFound) {
+		} else if errors.Is(err, entity.ErrNotFound) {
 			http.Error(w, "Категория не найдена", http.StatusBadRequest)
 			return
 		}

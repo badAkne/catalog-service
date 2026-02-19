@@ -1,11 +1,10 @@
-package util
+package entity
 
 import "errors"
 
 var (
 	ErrCategoryAlreadyExists = errors.New("category already exists")
-	ErrCategoryNotFound      = errors.New("category doesnt exist")
+	ErrNotFound              = errors.New("not found")
 	ErrCategoryHasRelation   = errors.New("unable to delete category: has relation")
 	ErrProductAlreadyExists  = errors.New("product already exists")
-	ErrProductNotFound       = errors.New("product doesnt exist")
 )

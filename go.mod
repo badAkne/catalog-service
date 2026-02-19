@@ -10,7 +10,6 @@ require (
 	github.com/uptrace/bun v1.2.16
 	github.com/uptrace/bun/dialect/pgdialect v1.2.16
 	github.com/uptrace/bun/driver/pgdriver v1.2.16
-	golang.org/x/text v0.31.0
 )
 
 require (

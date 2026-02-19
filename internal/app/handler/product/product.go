@@ -8,7 +8,6 @@ import (
 	"github.com/badAkne/catalog-service/internal/app/entity"
 	rhandler "github.com/badAkne/catalog-service/internal/app/handler"
 	rservice "github.com/badAkne/catalog-service/internal/app/service"
-	"github.com/badAkne/catalog-service/internal/app/util"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
@@ -30,15 +29,15 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.serviceProduct.Create(r.Context(), req)
 	if err != nil {
-		if errors.Is(err, util.ErrProductAlreadyExists) {
+		if errors.Is(err, entity.ErrProductAlreadyExists) {
 			http.Error(w, "Товар с таким названием уже существует", http.StatusConflict)
 			return
-		} else if errors.Is(err, util.ErrCategoryNotFound) {
+		} else if errors.Is(err, entity.ErrNotFound) {
 			http.Error(w, "Категория не найдена", http.StatusNotFound)
 			return
 		}
 
-		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -108,14 +107,11 @@ func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.serviceProduct.Update(r.Context(), guid, *req)
 	switch {
-	case errors.Is(err, util.ErrProductAlreadyExists):
+	case errors.Is(err, entity.ErrProductAlreadyExists):
 		http.Error(w, "Товар с таким названием уже существует", http.StatusConflict)
 		return
-	case errors.Is(err, util.ErrCategoryNotFound):
-		http.Error(w, "Категория не найдена", http.StatusNotFound)
-		return
-	case errors.Is(err, util.ErrProductNotFound):
-		http.Error(w, "Товар не найден", http.StatusNotFound)
+	case errors.Is(err, entity.ErrNotFound):
+		http.Error(w, "Категория или товар не найден", http.StatusNotFound)
 		return
 	case err != nil:
 		http.Error(w, err.Error(), http.StatusInternalServerError)
