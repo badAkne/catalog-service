@@ -3,4 +3,4 @@ package migration
 import "embed"
 
 //go:embed postgres
-var FS embed.FS
+var Postgres embed.FS
