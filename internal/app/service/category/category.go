@@ -2,13 +2,11 @@ package mcategory
 
 import (
 	"context"
-	"errors"
 
 	"github.com/badAkne/catalog-service/internal/app/entity"
 	"github.com/badAkne/catalog-service/internal/app/repository"
 	rservice "github.com/badAkne/catalog-service/internal/app/service"
 	"github.com/google/uuid"
-	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 type (
@@ -25,9 +23,7 @@ func NewService(repoCategory repository.Category) rservice.Category {
 func (s *service) Create(ctx context.Context, req entity.RequestCategoryCreate) (entity.ResponseCategoryCreate, error) {
 
 	if err := s.repoCategory.IsExistWithName(ctx, req.Name); err != nil {
-		if errors.Is(err, entity.ErrCategoryAlreadyExists) {
-			return entity.ResponseCategoryCreate{}, err
-		}
+		return entity.ResponseCategoryCreate{}, err
 	}
 
 	guid, err := uuid.NewV7()
@@ -99,18 +95,9 @@ func (s *service) Update(ctx context.Context, guid uuid.UUID, name string) (enti
 }
 
 func (s *service) Delete(ctx context.Context, guid uuid.UUID) error {
-	rows, err := s.repoCategory.Delete(ctx, guid)
+	err := s.repoCategory.Delete(ctx, guid)
 	if err != nil {
-		var pgErr pgdriver.Error
-		if errors.As(err, &pgErr) && pgErr.Field('C') == "23503" {
-			return entity.ErrCategoryHasRelation
-		}
-
 		return err
-	}
-
-	if rows == 0 {
-		return entity.ErrNotFound
 	}
 
 	return nil

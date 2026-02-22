@@ -2,15 +2,12 @@ package mproduct
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"math"
 
 	"github.com/badAkne/catalog-service/internal/app/entity"
 	"github.com/badAkne/catalog-service/internal/app/repository"
 	rservice "github.com/badAkne/catalog-service/internal/app/service"
 	"github.com/google/uuid"
-	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 type (
@@ -33,7 +30,15 @@ func (s *service) Create(ctx context.Context, req entity.RequestProductCreate) (
 		return entity.ResponseProductCreate{}, fmt.Errorf("unable to create guid for product: %w", err)
 	}
 
-	newProduct, err := s.repoProduct.Create(ctx, entity.Product{Name: req.Name, Price: req.Price, CategoryGUID: req.CategoryGUID, Description: req.Description, GUID: guid})
+	product := entity.Product{
+		GUID:         guid,
+		Name:         req.Name,
+		Price:        req.Price,
+		CategoryGUID: req.CategoryGUID,
+		Description:  req.Description,
+	}
+
+	newProduct, err := s.repoProduct.Create(ctx, product)
 
 	if err != nil {
 		return entity.ResponseProductCreate{}, err
@@ -65,16 +70,9 @@ func (s *service) Get(ctx context.Context, guid uuid.UUID) (entity.ResponseProdu
 }
 
 func (s *service) GetList(ctx context.Context, req entity.RequestProductGetList) ([]entity.ResponseProductCreate, error) {
-
-	var defMinPrice float32
-	req.MinPrice = max(req.MinPrice, defMinPrice)
-	if req.MaxPrice == 0 {
-		req.MaxPrice = math.MaxFloat32
-	}
-
 	products, err := s.repoProduct.GetList(ctx, req.CategoryGUID, req.MinPrice, req.MaxPrice)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get products: %w", err)
+		return nil, err
 	}
 
 	resProducts := make([]entity.ResponseProductCreate, 0, len(products))
@@ -96,27 +94,20 @@ func (s *service) GetList(ctx context.Context, req entity.RequestProductGetList)
 
 func (s *service) Update(ctx context.Context, guid uuid.UUID, req entity.RequestProductCreate) (entity.ResponseProductCreate, error) {
 
-	product, err := s.repoProduct.Update(ctx,
-		entity.Product{
-			GUID:         guid,
-			Name:         req.Name,
-			Price:        req.Price,
-			CategoryGUID: req.CategoryGUID,
-			Description:  req.Description,
-		},
-	)
-	if err != nil {
-		var pgErr pgdriver.Error
-		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
-			return entity.ResponseProductCreate{}, entity.ErrProductAlreadyExists
-		}
+	product := entity.Product{
+		GUID:         guid,
+		Name:         req.Name,
+		Price:        req.Price,
+		CategoryGUID: req.CategoryGUID,
+		Description:  req.Description,
+	}
 
+	product, err := s.repoProduct.Update(ctx, product)
+	if err != nil {
 		return entity.ResponseProductCreate{}, err
 	}
 
-	if product.GUID == uuid.Nil {
-		return entity.ResponseProductCreate{}, entity.ErrNotFound
-	} else if product.CategoryGUID == uuid.Nil {
+	if product.CategoryGUID == uuid.Nil {
 		return entity.ResponseProductCreate{}, entity.ErrNotFound
 	}
 
@@ -129,11 +120,11 @@ func (s *service) Update(ctx context.Context, guid uuid.UUID, req entity.Request
 	}, nil
 }
 
-func (s *service) Delete(ctx context.Context, guid uuid.UUID) (int64, error) {
-	rows, err := s.repoProduct.Delete(ctx, guid)
+func (s *service) Delete(ctx context.Context, guid uuid.UUID) error {
+	err := s.repoProduct.Delete(ctx, guid)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	return rows, nil
+	return nil
 }

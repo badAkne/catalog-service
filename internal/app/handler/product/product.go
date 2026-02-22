@@ -114,7 +114,7 @@ func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Категория или товар не найден", http.StatusNotFound)
 		return
 	case err != nil:
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
 		return
 	}
 
@@ -134,14 +134,15 @@ func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	rows, err := h.serviceProduct.Delete(r.Context(), guid)
+	err = h.serviceProduct.Delete(r.Context(), guid)
 	if err != nil {
+		if errors.Is(err, entity.ErrNotFound) {
+			http.Error(w, "Продукт не найден", http.StatusNotFound)
+			return
+		}
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	if rows == 0 {
-		http.Error(w, "Товар не найден", http.StatusNotFound)
 	}
 
 	w.WriteHeader(http.StatusNoContent)

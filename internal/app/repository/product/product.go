@@ -26,25 +26,30 @@ func NewRepoFromPostgres(_ context.Context, d *rcpostgres.Client) (repository.Pr
 }
 
 func (r *repoPg) Create(ctx context.Context, product entity.Product) (entity.Product, error) {
-	_, err := r.NewInsert().Model(&product).Returning("guid,name,price,category_guid,description").Exec(ctx)
+	_, err := r.NewInsert().Model(&product).Returning("*").Exec(ctx)
 	if err != nil {
 		var pgErr pgdriver.Error
-		if errors.Is(err, sql.ErrNoRows) {
-			return entity.Product{}, entity.ErrNotFound
-		} else if errors.As(err, &pgErr) && pgErr.Field('C') == "23503" {
-			return entity.Product{}, entity.ErrNotFound
+		if !errors.As(err, &pgErr) {
+			return entity.Product{}, fmt.Errorf("unable to create product: %w", err)
 		}
 
-		return entity.Product{}, fmt.Errorf("unable to create product: %w", err)
+		switch pgErr.Field('C') {
+		case "23503":
+			return entity.Product{}, entity.ErrNotFound
+		case "23505":
+			return entity.Product{}, entity.ErrProductAlreadyExists
+		default:
+			return entity.Product{}, fmt.Errorf("unable to create product: %w", err)
+		}
 	}
 
 	return product, nil
 }
 
 func (r *repoPg) Get(ctx context.Context, guid uuid.UUID) (entity.Product, error) {
-	product := new(entity.Product)
+	var product entity.Product
 
-	err := r.NewSelect().Model(product).Where("guid = ?", guid).Scan(ctx)
+	err := r.NewSelect().Model(&product).Where("guid = ?", guid).Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.Product{}, entity.ErrNotFound
@@ -53,12 +58,12 @@ func (r *repoPg) Get(ctx context.Context, guid uuid.UUID) (entity.Product, error
 		return entity.Product{}, fmt.Errorf("unable to get product%w", err)
 	}
 
-	return *product, nil
+	return product, nil
 }
 
 func (r *repoPg) IsExistWithName(ctx context.Context, name string) error {
-	product := new(entity.Product)
-	err := r.NewSelect().Model(product).Where("name = ?", name).Scan(ctx)
+	var product entity.Product
+	err := r.NewSelect().Model(&product).Where("name = ?", name).Scan(ctx)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("unable to check does product exist with name: %w", err)
 	}
@@ -84,32 +89,37 @@ func (r *repoPg) GetList(ctx context.Context, categoryGUID uuid.UUID, minPrice, 
 }
 
 func (r *repoPg) Update(ctx context.Context, product entity.Product) (entity.Product, error) {
+	res, err := r.NewUpdate().Model(&product).OmitZero().Where("guid=", product.GUID).Exec(ctx)
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return entity.Product{}, entity.ErrNotFound
+	}
 
-	if product.CategoryGUID != uuid.Nil {
-		_, err := r.NewUpdate().Model(&product).Set("name = ?,price = ?,category_guid=?,description=?,updated_at = NOW()", product.Name, product.Price, product.CategoryGUID, product.Description).Where("guid = ?", product.GUID).Returning("*").Exec(ctx)
-		if err != nil {
-			return entity.Product{}, fmt.Errorf("unable to update product: %w", err)
+	if err != nil {
+		var pgErr pgdriver.Error
+		if errors.As(err, &pgErr) {
+			switch pgErr.Field('C') {
+			case "23503":
+				return entity.Product{}, entity.ErrNotFound
+			case "23505":
+				return entity.Product{}, entity.ErrProductAlreadyExists
+			}
 		}
-	} else {
-		_, err := r.NewUpdate().Model(&product).Set("name = ?,price = ?,description=?,updated_at = NOW()", product.Name, product.Price, product.Description).Where("guid = ?", product.GUID).Returning("*").Exec(ctx)
-		if err != nil {
-			return entity.Product{}, fmt.Errorf("unable to update product: %w", err)
-		}
+
+		return entity.Product{}, fmt.Errorf("unable to update product: %w", err)
 	}
 
 	return product, nil
 }
 
-func (r *repoPg) Delete(ctx context.Context, guid uuid.UUID) (int64, error) {
+func (r *repoPg) Delete(ctx context.Context, guid uuid.UUID) error {
 	res, err := r.NewDelete().Model((*entity.Product)(nil)).Where("guid = ?", guid).Exec(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("unable to delete product: %w", err)
+		return fmt.Errorf("unable to delete product: %w", err)
 	}
 
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return 0, err
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return entity.ErrNotFound
 	}
 
-	return rows, nil
+	return nil
 }

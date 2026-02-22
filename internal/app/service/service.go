@@ -20,6 +20,6 @@ type (
 		Get(ctx context.Context, guid uuid.UUID) (entity.ResponseProductCreate, error)
 		GetList(ctx context.Context, req entity.RequestProductGetList) ([]entity.ResponseProductCreate, error)
 		Update(ctx context.Context, guid uuid.UUID, req entity.RequestProductCreate) (entity.ResponseProductCreate, error)
-		Delete(ctx context.Context, guid uuid.UUID) (int64, error)
+		Delete(ctx context.Context, guid uuid.UUID) error
 	}
 )

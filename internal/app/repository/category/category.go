@@ -90,16 +90,20 @@ func (r *repoPG) Update(ctx context.Context, guid uuid.UUID, name string) (entit
 	return category, nil
 }
 
-func (r *repoPG) Delete(ctx context.Context, guid uuid.UUID) (int64, error) {
+func (r *repoPG) Delete(ctx context.Context, guid uuid.UUID) error {
 	res, err := r.NewDelete().Model((*entity.Category)(nil)).Where("guid = ?", guid).Exec(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("unable to delete category: %w", err)
+		var pgErr pgdriver.Error
+		if errors.As(err, &pgErr) && pgErr.Field('C') == "23503" {
+			return entity.ErrCategoryHasRelation
+		}
+
+		return fmt.Errorf("unable to delete category: %w", err)
 	}
 
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("unable to get rows affected: %w", err)
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return entity.ErrNotFound
 	}
 
-	return rows, nil
+	return nil
 }
