@@ -18,7 +18,7 @@ type Category struct {
 }
 
 type RequestCategoryCreate struct {
-	Name string `json:"name"`
+	Name string `json:"name" binding:"required,min=2,max=255"`
 }
 
 type ResponseCategoryCreate struct {

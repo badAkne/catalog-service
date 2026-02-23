@@ -51,7 +51,7 @@ func (r *repoPG) Get(ctx context.Context, guid uuid.UUID) (entity.Category, erro
 func (r *repoPG) IsExistWithName(ctx context.Context, name string) error {
 	category := new(entity.Category)
 	err := r.NewSelect().Model(category).Where("name = ?", name).Scan(ctx)
-	if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("unable to check does category exist with name: %w", err)
 	}
 
