@@ -73,18 +73,11 @@ func (h *handler) GetList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := httph.DecodeJSON(r, categories); err != nil {
-		httph.SendError(w, http.StatusInternalServerError, err)
-	}
+	httph.SendJSON(w, http.StatusOK, categories)
 }
 
 func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
-	vars := make(map[string]string)
-	err := binding.ScanAndValidateQuery(r, vars)
-	if err != nil {
-		httph.SendError(w, http.StatusInternalServerError, err)
-		return
-	}
+	vars := mux.Vars(r)
 
 	guid, err := uuid.Parse(vars["category_guid"])
 	if err != nil {
@@ -92,14 +85,15 @@ func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category := entity.ResponseCategoryCreate{}
+	var category entity.RequestCategoryCreate
 	if err := binding.ScanAndValidateJSON(r, &category); err != nil {
-		httph.SendError(w, http.StatusBadRequest, err)
+		httph.SendError(w, http.StatusBadRequest, entity.ErrIncorrectParameters)
+		return
 	}
 
 	defer r.Body.Close()
 
-	category, err = h.serviceCategory.Update(r.Context(), guid, category.Name)
+	newCategory, err := h.serviceCategory.Update(r.Context(), guid, category.Name)
 	if err != nil {
 		if errors.Is(err, entity.ErrNotFound) {
 			httph.SendError(w, http.StatusNotFound, err)
@@ -113,17 +107,11 @@ func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httph.SendJSON(w, http.StatusOK, category)
+	httph.SendJSON(w, http.StatusOK, newCategory)
 }
 
 func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
-	vars := make(map[string]string)
-	err := binding.ScanAndValidateQuery(r, &vars)
-	if err != nil {
-		httph.SendEmpty(w, http.StatusBadRequest)
-		return
-	}
-
+	vars := mux.Vars(r)
 	guid, err := uuid.Parse(vars["category_guid"])
 	if err != nil {
 		httph.SendError(w, http.StatusBadRequest, err)

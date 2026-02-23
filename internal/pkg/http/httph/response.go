@@ -5,10 +5,13 @@ import (
 	"net/http"
 )
 
-func SendJSON(w http.ResponseWriter, status int, data any) {
+func SendJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	err := json.NewEncoder(w).Encode(data)
+	if err != nil {
+		return
+	}
 }
 
 func SendEmpty(w http.ResponseWriter, status int) {
@@ -18,9 +21,12 @@ func SendEmpty(w http.ResponseWriter, status int) {
 func SendError(w http.ResponseWriter, status int, err error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+	err = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+	if err != nil {
+		return
+	}
 }
 
-func DecodeJSON(r *http.Request, v any) error {
+func DecodeJSON(r *http.Request, v interface{}) error {
 	return json.NewDecoder(r.Body).Decode(v)
 }

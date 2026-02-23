@@ -89,12 +89,11 @@ func (r *repoPg) GetList(ctx context.Context, categoryGUID uuid.UUID, minPrice, 
 }
 
 func (r *repoPg) Update(ctx context.Context, product entity.Product) (entity.Product, error) {
-	res, err := r.NewUpdate().Model(&product).OmitZero().Where("guid=", product.GUID).Exec(ctx)
-	if rows, _ := res.RowsAffected(); rows == 0 {
-		return entity.Product{}, entity.ErrNotFound
-	}
-
+	err := r.NewUpdate().Model(&product).OmitZero().Where("guid = ?", product.GUID).Scan(ctx, &product)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entity.Product{}, entity.ErrNotFound
+		}
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) {
 			switch pgErr.Field('C') {
