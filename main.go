@@ -5,9 +5,15 @@ import (
 	"log"
 
 	"github.com/badAkne/catalog-service/internal/app/config"
+	rcategory "github.com/badAkne/catalog-service/internal/app/handler/category"
 	rhealth "github.com/badAkne/catalog-service/internal/app/handler/health"
+	rproduct "github.com/badAkne/catalog-service/internal/app/handler/product"
 	rprocessor "github.com/badAkne/catalog-service/internal/app/processor/http"
-	rcpostgres "github.com/badAkne/catalog-service/internal/app/repository/postgres"
+	pcategory "github.com/badAkne/catalog-service/internal/app/repository/category"
+	rcpostgres "github.com/badAkne/catalog-service/internal/app/repository/conn/postgres"
+	pproduct "github.com/badAkne/catalog-service/internal/app/repository/product"
+	mcategory "github.com/badAkne/catalog-service/internal/app/service/category"
+	mproduct "github.com/badAkne/catalog-service/internal/app/service/product"
 )
 
 func main() {
@@ -33,9 +39,24 @@ func main() {
 		log.Printf("version:%d\ndatabase is up to date ", newVer)
 	}
 
-	hHandler := rhealth.NewHandler()
+	categoryRepo, err := pcategory.NewRepoFromPostgres(ctx, pgClient)
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+	}
 
-	proc := rprocessor.NewHttp(hHandler, cfg.Processor.WebServer)
+	repoProduct, err := pproduct.NewRepoFromPostgres(ctx, pgClient)
+	if err != nil {
+		log.Fatalf("unable to create product: %s", err.Error())
+	}
+
+	categoryService := mcategory.NewService(categoryRepo)
+	productService := mproduct.NewService(repoProduct)
+
+	hHandler := rhealth.NewHandler()
+	categoryHandler := rcategory.NewHandler(categoryService)
+	productHandler := rproduct.NewHandler(productService)
+
+	proc := rprocessor.NewHttp(hHandler, categoryHandler, productHandler, cfg.Processor.WebServer)
 
 	if err := proc.Serve(); err != nil {
 		log.Fatal(err)
