@@ -38,7 +38,7 @@ func (r *repoPG) Get(ctx context.Context, guid uuid.UUID) (entity.Category, erro
 	category := new(entity.Category)
 	err := r.NewSelect().Model(category).Where("guid = ?", guid).Scan(ctx)
 	if err != nil {
-		if errors.Is(errors.Unwrap(err), sql.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return entity.Category{}, entity.ErrNotFound
 		}
 
@@ -51,7 +51,7 @@ func (r *repoPG) Get(ctx context.Context, guid uuid.UUID) (entity.Category, erro
 func (r *repoPG) IsExistWithName(ctx context.Context, name string) error {
 	category := new(entity.Category)
 	err := r.NewSelect().Model(category).Where("name = ?", name).Scan(ctx)
-	if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("unable to check does category exist with name: %w", err)
 	}
 
@@ -77,7 +77,7 @@ func (r *repoPG) GetList(ctx context.Context) ([]entity.Category, error) {
 func (r *repoPG) Update(ctx context.Context, guid uuid.UUID, name string) (entity.Category, error) {
 	var category entity.Category
 
-	_, err := r.NewUpdate().Model(&category).Set("name = ?, updated_at = NOW()", name).Where("guid = ?", guid).Returning("*").Exec(ctx)
+	_, err := r.NewUpdate().Model(&category).Set("name = ?, updated_at = NOW()", name).Where("guid = ?", guid).Exec(ctx)
 	if err != nil {
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {

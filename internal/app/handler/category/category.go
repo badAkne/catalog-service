@@ -1,13 +1,14 @@
 package rcategory
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/badAkne/catalog-service/internal/app/entity"
 	rhandler "github.com/badAkne/catalog-service/internal/app/handler"
 	rservice "github.com/badAkne/catalog-service/internal/app/service"
+	"github.com/badAkne/catalog-service/internal/pkg/http/binding"
+	"github.com/badAkne/catalog-service/internal/pkg/http/httph"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
@@ -21,137 +22,115 @@ func NewHandler(serviceCategory rservice.Category) rhandler.Category {
 }
 
 func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
-	reqCategory := entity.RequestCategoryCreate{}
-	err := json.NewDecoder(r.Body).Decode(&reqCategory)
-	if err != nil {
-		http.Error(w, "Внутренняя ошибка сервера", http.StatusBadRequest)
+	var reqCategory entity.RequestCategoryCreate
+	if err := binding.ScanAndValidateJSON(r, &reqCategory); err != nil {
+		httph.SendError(w, http.StatusBadRequest, entity.ErrIncorrectParameters)
+		return
 	}
 
 	defer r.Body.Close()
 
-	if reqCategory.Name == "" {
-		http.Error(w, "Обязательное поле отсутствует", http.StatusBadRequest)
-	}
 	resCategory, err := h.serviceCategory.Create(r.Context(), reqCategory)
 	if err != nil {
-
-		var serviceErr = entity.ErrCategoryAlreadyExists
-		if errors.Is(err, serviceErr) {
-			http.Error(w, "Категория с таким названием уже существует", http.StatusConflict)
+		if errors.Is(err, entity.ErrCategoryAlreadyExists) {
+			httph.SendError(w, http.StatusBadRequest, err)
 			return
 		}
 
-		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(resCategory); err != nil {
-		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+		httph.SendError(w, http.StatusInternalServerError, err)
 		return
 	}
+
+	httph.SendJSON(w, http.StatusCreated, resCategory)
 }
 
 func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	guid, err := uuid.Parse(vars["category_guid"])
 	if err != nil {
-		http.Error(w, "Неправильный формат UUID", http.StatusBadRequest)
+		httph.SendError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	category, err := h.serviceCategory.Get(r.Context(), guid)
 	if err != nil {
 		if errors.Is(err, entity.ErrNotFound) {
-			http.Error(w, "Категория не найдена", http.StatusNotFound)
+			httph.SendError(w, http.StatusNotFound, entity.ErrNotFound)
 			return
 		}
 
-		http.Error(w, "Внутренняя ошибка сервера", http.StatusBadRequest)
+		httph.SendError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(category); err != nil {
-		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
-		return
-	}
+	httph.SendJSON(w, http.StatusOK, category)
 }
 
 func (h *handler) GetList(w http.ResponseWriter, r *http.Request) {
 	categories, err := h.serviceCategory.GetList(r.Context())
 	if err != nil {
-		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+		httph.SendError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err = json.NewEncoder(w).Encode(categories); err != nil {
-		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
-		return
-	}
+	httph.SendJSON(w, http.StatusOK, categories)
 }
 
 func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+
 	guid, err := uuid.Parse(vars["category_guid"])
 	if err != nil {
-		http.Error(w, ("Неправильный формат UUID"), http.StatusBadRequest)
+		httph.SendError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	category := entity.ResponseCategoryCreate{}
-	if err = json.NewDecoder(r.Body).Decode(&category); err != nil {
-		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+	var category entity.RequestCategoryCreate
+	if err := binding.ScanAndValidateJSON(r, &category); err != nil {
+		httph.SendError(w, http.StatusBadRequest, entity.ErrIncorrectParameters)
 		return
 	}
+
 	defer r.Body.Close()
 
-	category, err = h.serviceCategory.Update(r.Context(), guid, category.Name)
+	newCategory, err := h.serviceCategory.Update(r.Context(), guid, category.Name)
 	if err != nil {
 		if errors.Is(err, entity.ErrNotFound) {
-			http.Error(w, "Категория не найдена", http.StatusNotFound)
+			httph.SendError(w, http.StatusNotFound, err)
 			return
 		} else if errors.Is(err, entity.ErrCategoryAlreadyExists) {
-			http.Error(w, "Категория с таким названием уже существует", http.StatusConflict)
+			httph.SendError(w, http.StatusConflict, err)
 			return
 		}
 
-		http.Error(w, "Внутренняя ошибка сервера", http.StatusBadRequest)
+		httph.SendError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err = json.NewEncoder(w).Encode(category); err != nil {
-		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
-		return
-	}
+	httph.SendJSON(w, http.StatusOK, newCategory)
 }
 
 func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	guid, err := uuid.Parse(vars["category_guid"])
 	if err != nil {
-		http.Error(w, "Неверный формат UUID", http.StatusBadRequest)
+		httph.SendError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	err = h.serviceCategory.Delete(r.Context(), guid)
 	if err != nil {
 		if errors.Is(err, entity.ErrCategoryHasRelation) {
-			http.Error(w, "Невозможно удалить категорию: имеются связанные товары", http.StatusConflict)
+			httph.SendError(w, http.StatusConflict, err)
 			return
 		} else if errors.Is(err, entity.ErrNotFound) {
-			http.Error(w, "Категория не найдена", http.StatusBadRequest)
+			httph.SendError(w, http.StatusBadRequest, err)
 			return
 		}
 
-		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+		httph.SendError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	httph.SendEmpty(w, http.StatusNoContent)
 }

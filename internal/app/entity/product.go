@@ -21,16 +21,16 @@ type Product struct {
 }
 
 type RequestProductCreate struct {
-	Name         string    `json:"name"`
-	Price        float32   `json:"price"`
-	CategoryGUID uuid.UUID `json:"category_guid"`
-	Description  string    `json:"description"`
+	Name         string    `json:"name" binding:"required,min=2,max=255"`
+	Price        float32   `json:"price" binding:"required,gt=0"`
+	CategoryGUID uuid.UUID `json:"category_guid" binding:"required,uuid"`
+	Description  string    `json:"description" binding:"omitempty,min=2,max=255"`
 }
 
 type RequestProductGetList struct {
-	CategoryGUID uuid.UUID `json:"category_uuid"`
-	MinPrice     float32   `json:"min_price"`
-	MaxPrice     float32   `json:"max_price"`
+	CategoryGUID uuid.UUID `json:"category_uuid" binding:"uuid,omitempty"`
+	MinPrice     float32   `json:"min_price" binding:"required,ltfield=MaxPrice"`
+	MaxPrice     float32   `json:"max_price" binding:"required,gtfield=MinPrice"`
 }
 
 type ResponseProductCreate struct {
@@ -39,4 +39,11 @@ type ResponseProductCreate struct {
 	Price        float32   `json:"price"`
 	CategoryGUID uuid.UUID `json:"category_guid"`
 	Description  string    `json:"description"`
+}
+
+type RequestProductUpdate struct {
+	Name         string    `json:"name" binding:"omitempty,min=2,max=255"`
+	Price        float32   `json:"price" binding:"omitempty,gt=0"`
+	CategoryGUID uuid.UUID `json:"category_guid" binding:"omitempty,uuid"`
+	Description  string    `json:"description" binding:"omitempty,min=2,max=255"`
 }

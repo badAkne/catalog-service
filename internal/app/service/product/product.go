@@ -3,6 +3,7 @@ package mproduct
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/badAkne/catalog-service/internal/app/entity"
 	"github.com/badAkne/catalog-service/internal/app/repository"
@@ -92,7 +93,7 @@ func (s *service) GetList(ctx context.Context, req entity.RequestProductGetList)
 	return resProducts, nil
 }
 
-func (s *service) Update(ctx context.Context, guid uuid.UUID, req entity.RequestProductCreate) (entity.ResponseProductCreate, error) {
+func (s *service) Update(ctx context.Context, guid uuid.UUID, req entity.RequestProductUpdate) (entity.ResponseProductCreate, error) {
 
 	product := entity.Product{
 		GUID:         guid,
@@ -100,15 +101,12 @@ func (s *service) Update(ctx context.Context, guid uuid.UUID, req entity.Request
 		Price:        req.Price,
 		CategoryGUID: req.CategoryGUID,
 		Description:  req.Description,
+		UpdatedAt:    time.Now(),
 	}
 
 	product, err := s.repoProduct.Update(ctx, product)
 	if err != nil {
 		return entity.ResponseProductCreate{}, err
-	}
-
-	if product.CategoryGUID == uuid.Nil {
-		return entity.ResponseProductCreate{}, entity.ErrNotFound
 	}
 
 	return entity.ResponseProductCreate{
