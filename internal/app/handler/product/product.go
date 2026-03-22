@@ -25,6 +25,7 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 	var req entity.RequestProductCreate
 	if err := binding.ScanAndValidateJSON(r, &req); err != nil {
 		httph.SendError(w, http.StatusBadRequest, entity.ErrIncorrectParameters)
+		httph.ErrorApply(r, err)
 		return
 	}
 
@@ -32,13 +33,16 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, entity.ErrProductAlreadyExists) {
 			httph.SendError(w, http.StatusConflict, err)
+			httph.ErrorApply(r, err)
 			return
 		} else if errors.Is(err, entity.ErrNotFound) {
 			httph.SendError(w, http.StatusNotFound, err)
+			httph.ErrorApply(r, err)
 			return
 		}
 
 		httph.SendError(w, http.StatusInternalServerError, err)
+		httph.ErrorApply(r, err)
 		return
 	}
 
@@ -50,12 +54,14 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	guid, err := uuid.Parse(vars["product_guid"])
 	if err != nil {
 		httph.SendError(w, http.StatusBadRequest, err)
+		httph.ErrorApply(r, err)
 		return
 	}
 
 	product, err := h.serviceProduct.Get(r.Context(), guid)
 	if err != nil {
 		httph.SendError(w, http.StatusNotFound, err)
+		httph.ErrorApply(r, err)
 		return
 	}
 
@@ -65,12 +71,14 @@ func (h *handler) GetList(w http.ResponseWriter, r *http.Request) {
 	var filters entity.RequestProductGetList
 	if err := binding.ScanAndValidateJSON(r, &filters); err != nil {
 		httph.SendError(w, http.StatusBadRequest, err)
+		httph.ErrorApply(r, err)
 		return
 	}
 
 	products, err := h.serviceProduct.GetList(r.Context(), filters)
 	if err != nil {
 		httph.SendError(w, http.StatusInternalServerError, err)
+		httph.ErrorApply(r, err)
 		return
 	}
 
@@ -82,12 +90,14 @@ func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
 	guid, err := uuid.Parse(vars["product_guid"])
 	if err != nil {
 		httph.SendError(w, http.StatusBadRequest, err)
+		httph.ErrorApply(r, err)
 		return
 	}
 
 	var req entity.RequestProductUpdate
 	if err := binding.ScanAndValidateJSON(r, &req); err != nil {
 		httph.SendError(w, http.StatusBadRequest, err)
+		httph.ErrorApply(r, err)
 		return
 	}
 
@@ -95,12 +105,15 @@ func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, entity.ErrProductAlreadyExists):
 		httph.SendError(w, http.StatusConflict, err)
+		httph.ErrorApply(r, err)
 		return
 	case errors.Is(err, entity.ErrNotFound):
 		httph.SendError(w, http.StatusNotFound, err)
+		httph.ErrorApply(r, err)
 		return
 	case err != nil:
 		httph.SendError(w, http.StatusInternalServerError, err)
+		httph.ErrorApply(r, err)
 		return
 	}
 
@@ -112,6 +125,7 @@ func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 	guid, err := uuid.Parse(vars["product_guid"])
 	if err != nil {
 		httph.SendError(w, http.StatusBadRequest, err)
+		httph.ErrorApply(r, err)
 		return
 	}
 
@@ -119,10 +133,12 @@ func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, entity.ErrNotFound) {
 			httph.SendError(w, http.StatusNotFound, err)
+			httph.ErrorApply(r, err)
 			return
 		}
 
 		httph.SendError(w, http.StatusInternalServerError, err)
+		httph.ErrorApply(r, err)
 		return
 	}
 
