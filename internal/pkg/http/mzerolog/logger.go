@@ -131,6 +131,7 @@ func (m *middleware) applyExtractors(
 	}
 }
 
+/*
 func newStringExtractor(key string, cb CallbackExtractorString) extractorStr {
 	return extractorStr{key, cb}
 }
@@ -138,3 +139,4 @@ func newStringExtractor(key string, cb CallbackExtractorString) extractorStr {
 func newAnyExtractor(key string, cb CallbackExtractorAny) extractorAny {
 	return extractorAny{key, cb}
 }
+*/

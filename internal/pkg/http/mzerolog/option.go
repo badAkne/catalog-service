@@ -47,7 +47,7 @@ func WithStringExtractorOnFail(key string, callback CallbackExtractorString) Opt
 	return func(m *middleware) {
 		if key != "" && callback != nil {
 			ext := extractorStr{key, callback}
-			m.fromOptions.extStrOnFail = append(m.fromOptions.extStrOnSuccess, ext)
+			m.fromOptions.extStrOnFail = append(m.fromOptions.extStrOnFail, ext)
 		}
 	}
 }
