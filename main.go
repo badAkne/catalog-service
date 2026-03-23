@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"os"
 
 	"github.com/badAkne/catalog-service/internal/app/config"
 	rcategory "github.com/badAkne/catalog-service/internal/app/handler/category"
@@ -14,12 +14,20 @@ import (
 	pproduct "github.com/badAkne/catalog-service/internal/app/repository/product"
 	mcategory "github.com/badAkne/catalog-service/internal/app/service/category"
 	mproduct "github.com/badAkne/catalog-service/internal/app/service/product"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
 	ctx := context.Background()
 
-	config.Load()
+	config.Load(config.LoadArgs{
+		Output:          os.Stdout,
+		EnableSimpleLog: true,
+		SkipConfig:      false,
+	})
+
+	log.Info().Msg("Application started")
+	log.Debug().Msg("This is debug level")
 
 	cfg := config.Root
 
@@ -30,7 +38,7 @@ func main() {
 
 	oldVer, newVer, err := pgClient.Migrate(ctx)
 	if err != nil {
-		log.Fatal("failed to run migrations")
+		log.Fatal().Msg("failed to run migrations")
 	}
 
 	if oldVer != newVer {
@@ -41,12 +49,12 @@ func main() {
 
 	categoryRepo, err := pcategory.NewRepoFromPostgres(ctx, pgClient)
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		log.Fatal().Msgf("%s", err.Error())
 	}
 
 	repoProduct, err := pproduct.NewRepoFromPostgres(ctx, pgClient)
 	if err != nil {
-		log.Fatalf("unable to create product: %s", err.Error())
+		log.Fatal().Msgf("unable to create product: %s", err.Error())
 	}
 
 	categoryService := mcategory.NewService(categoryRepo)
@@ -59,6 +67,6 @@ func main() {
 	proc := rprocessor.NewHttp(hHandler, categoryHandler, productHandler, cfg.Processor.WebServer)
 
 	if err := proc.Serve(); err != nil {
-		log.Fatal(err)
+		log.Fatal().Msg(err.Error())
 	}
 }
