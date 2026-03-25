@@ -22,16 +22,26 @@ func NewService(repoCategory repository.Category) rservice.Category {
 // pgdriver нужен для того, чтобы ловить ошибку от bun
 func (s *service) Create(ctx context.Context, req entity.RequestCategoryCreate) (entity.ResponseCategoryCreate, error) {
 
-	if err := s.repoCategory.IsExistWithName(ctx, req.Name); err != nil {
-		return entity.ResponseCategoryCreate{}, err
-	}
+	var newCategory entity.Category
 
 	guid, err := uuid.NewV7()
 	if err != nil {
 		return entity.ResponseCategoryCreate{}, err
 	}
 
-	newCategory, err := s.repoCategory.Create(ctx, entity.Category{Name: req.Name, GUID: guid})
+	err = s.repoCategory.InsideTx(ctx, func(ctx context.Context) error {
+
+		if err := s.repoCategory.IsExistWithName(ctx, req.Name); err != nil {
+			return err
+		}
+
+		newCategory, err = s.repoCategory.Create(ctx, entity.Category{Name: req.Name, GUID: guid})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 
 	if err != nil {
 		return entity.ResponseCategoryCreate{}, err

@@ -9,6 +9,7 @@ import (
 
 type (
 	Category interface {
+		Transactional
 		Create(ctx context.Context, category entity.Category) (entity.Category, error)
 		Get(ctx context.Context, guid uuid.UUID) (entity.Category, error)
 		IsExistWithName(ctx context.Context, name string) error
@@ -17,11 +18,16 @@ type (
 		Delete(ctx context.Context, guid uuid.UUID) error
 	}
 	Product interface {
+		Transactional
 		Create(ctx context.Context, product entity.Product) (entity.Product, error)
 		Get(ctx context.Context, guid uuid.UUID) (entity.Product, error)
 		IsExistWithName(ctx context.Context, name string) error
 		GetList(ctx context.Context, categoryGUID uuid.UUID, minPrice, maxPrice float32) ([]entity.Product, error)
 		Update(ctx context.Context, product entity.Product) (entity.Product, error)
 		Delete(ctx context.Context, guid uuid.UUID) error
+	}
+
+	Transactional interface {
+		InsideTx(ctx context.Context, cb func(ctx context.Context) error) error
 	}
 )
