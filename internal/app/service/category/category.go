@@ -7,6 +7,7 @@ import (
 	"github.com/badAkne/catalog-service/internal/app/repository"
 	rservice "github.com/badAkne/catalog-service/internal/app/service"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 )
 
 type (
@@ -101,4 +102,37 @@ func (s *service) Delete(ctx context.Context, guid uuid.UUID) error {
 	}
 
 	return nil
+}
+
+// TODO Удалить
+func (s *service) SomeMethod(ctx context.Context, req entity.RequestCategoryCreate) error {
+	return s.repoCategory.InsideTx(ctx, func(ctx context.Context) error {
+
+		guid, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+
+		category := entity.Category{
+			GUID: guid,
+			Name: req.Name,
+		}
+
+		log.Debug().Msg("about to rreate category in tx")
+
+		category, err = s.repoCategory.Create(ctx, category)
+		if err != nil {
+			log.Debug().Msgf("failed to create category in tx: %w", err)
+			return err
+		}
+
+		log.Debug().Interface("category", category).Msg("Created category in tx")
+
+		log.Debug().Msg("about to get category in tx")
+		category, err = s.repoCategory.Get(ctx, guid)
+
+		log.Debug().Interface("category", category).Msg("got category")
+
+		return nil
+	})
 }

@@ -9,13 +9,10 @@ import (
 type _ctxKeyTx struct{}
 
 func getTxFromContext(ctx context.Context) bun.Tx {
-	val := ctx.Value(_ctxKeyTx{})
 
-	if tx, ok := val.(bun.Tx); ok {
-		return tx
-	}
+	tx, _ := ctx.Value(_ctxKeyTx{}).(bun.Tx)
 
-	return bun.Tx{}
+	return tx
 }
 
 func setTxToConetext(ctx context.Context, tx bun.Tx) context.Context {
