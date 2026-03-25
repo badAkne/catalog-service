@@ -122,7 +122,7 @@ func (s *service) SomeMethod(ctx context.Context, req entity.RequestCategoryCrea
 
 		category, err = s.repoCategory.Create(ctx, category)
 		if err != nil {
-			log.Debug().Msgf("failed to create category in tx: %w", err)
+			log.Debug().Msgf("failed to create category in tx: %s", err.Error())
 			return err
 		}
 
@@ -131,7 +131,7 @@ func (s *service) SomeMethod(ctx context.Context, req entity.RequestCategoryCrea
 		log.Debug().Msg("about to get category in tx")
 		category, err = s.repoCategory.Get(ctx, guid)
 		if err != nil {
-			log.Debug().Msgf("failed to get category %w", err)
+			log.Debug().Msgf("failed to get category %s", err.Error())
 			return err
 		}
 
