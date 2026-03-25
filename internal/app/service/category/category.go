@@ -47,22 +47,6 @@ func (s *service) Create(ctx context.Context, req entity.RequestCategoryCreate) 
 		return entity.ResponseCategoryCreate{}, err
 	}
 
-	/*
-		if err := s.repoCategory.IsExistWithName(ctx, req.Name); err != nil {
-			return entity.ResponseCategoryCreate{}, err
-		}
-
-		guid, err := uuid.NewV7()
-		if err != nil {
-			return entity.ResponseCategoryCreate{}, err
-		}
-
-		newCategory, err := s.repoCategory.Create(ctx, entity.Category{Name: req.Name, GUID: guid})
-		if err != nil {
-			return entity.ResponseCategoryCreate{}, err
-		}
-	*/
-
 	return entity.ResponseCategoryCreate{
 		Name:      newCategory.Name,
 		GUID:      newCategory.GUID,
