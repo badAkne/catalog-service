@@ -111,13 +111,14 @@ func (r *repoPg) Update(ctx context.Context, product entity.Product) (entity.Pro
 }
 
 func (r *repoPg) Delete(ctx context.Context, guid uuid.UUID) error {
-	res, err := r.NewDelete().Model((*entity.Product)(nil)).Where("guid = ?", guid).Exec(ctx)
+	var product entity.Product
+	err := r.NewDelete().Model((*entity.Product)(nil)).Where("guid = ?", guid).Returning("*").Scan(ctx, product)
 	if err != nil {
-		return fmt.Errorf("unable to delete product: %w", err)
-	}
+		if errors.Is(err, sql.ErrNoRows) {
+			return entity.ErrNotFound
+		}
 
-	if rows, _ := res.RowsAffected(); rows == 0 {
-		return entity.ErrNotFound
+		return fmt.Errorf("unable to delete product: %w", err)
 	}
 
 	return nil
