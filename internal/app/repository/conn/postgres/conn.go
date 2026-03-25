@@ -66,8 +66,10 @@ func NewConn(ctx context.Context, cfg section.RepositoryPostgres) (*Client, erro
 		return nil, fmt.Errorf("failed to ping connection: %w", err)
 	}
 
+	bunDB := newBunIdbTxInjector(rawBunDB)
+
 	return &Client{
-		_bunDB:   rawBunDB,
+		_bunDB:   bunDB,
 		rawBunDB: rawBunDB,
 		cfg:      cfg,
 	}, nil
@@ -120,4 +122,40 @@ func (c *Client) Migrate(ctx context.Context) (oldVer, newVer int64, err error) 
 	}
 
 	return oldVer, newVer, nil
+}
+
+func (c *Client) InsideTx(ctx context.Context, f func(ctx context.Context) error) error {
+	tx := getTxFromContext(ctx)
+	if tx.Tx != nil {
+		return f(ctx)
+	}
+
+	var done bool
+	var err error
+
+	tx, err = c.rawBunDB.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	defer func() {
+		if !done {
+			_ = tx.Rollback()
+		}
+	}()
+
+	ctx = setTxToConetext(ctx, tx)
+
+	err = f(ctx)
+	if err != nil {
+		return err
+	}
+
+	done = true
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
 }
