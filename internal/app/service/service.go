@@ -14,7 +14,6 @@ type (
 		GetList(ctx context.Context) ([]entity.ResponseCategoryCreate, error)
 		Update(ctx context.Context, guid uuid.UUID, name string) (entity.ResponseCategoryCreate, error)
 		Delete(ctx context.Context, guid uuid.UUID) error
-		SomeMethod(ctx context.Context, req entity.RequestCategoryCreate) error
 	}
 	Product interface {
 		Create(ctx context.Context, req entity.RequestProductCreate) (entity.ResponseProductCreate, error)

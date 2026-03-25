@@ -3,7 +3,6 @@ package rcategory
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/badAkne/catalog-service/internal/app/entity"
 	rhandler "github.com/badAkne/catalog-service/internal/app/handler"
@@ -56,20 +55,6 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 		httph.ErrorApply(r, err)
 		return
 	}
-
-	//TODO отсюда
-	req := entity.RequestCategoryCreate{
-		Name: "dolce",
-	}
-
-	err = h.serviceCategory.SomeMethod(r.Context(), req)
-	if err != nil {
-		httph.SendError(w, 500, err)
-		return
-	}
-
-	time.Sleep(2 * time.Second)
-	//TODO: до сюда удалить надо
 
 	category, err := h.serviceCategory.Get(r.Context(), guid)
 	if err != nil {

@@ -22,25 +22,35 @@ func NewService(repoProduct repository.Product) rservice.Product {
 }
 
 func (s *service) Create(ctx context.Context, req entity.RequestProductCreate) (entity.ResponseProductCreate, error) {
-	if err := s.repoProduct.IsExistWithName(ctx, req.Name); err != nil {
-		return entity.ResponseProductCreate{}, err
-	}
+
+	var newProduct entity.Product
 
 	guid, err := uuid.NewV7()
 	if err != nil {
 		return entity.ResponseProductCreate{}, fmt.Errorf("unable to create guid for product: %w", err)
 	}
 
-	product := entity.Product{
-		GUID:         guid,
-		Name:         req.Name,
-		Price:        req.Price,
-		CategoryGUID: req.CategoryGUID,
-		Description:  req.Description,
-	}
+	err = s.repoProduct.InsideTx(ctx, func(ctx context.Context) error {
 
-	newProduct, err := s.repoProduct.Create(ctx, product)
+		if err := s.repoProduct.IsExistWithName(ctx, req.Name); err != nil {
+			return err
+		}
 
+		product := entity.Product{
+			GUID:         guid,
+			Name:         req.Name,
+			Price:        req.Price,
+			CategoryGUID: req.CategoryGUID,
+			Description:  req.Description,
+		}
+
+		newProduct, err = s.repoProduct.Create(ctx, product)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return entity.ResponseProductCreate{}, err
 	}
