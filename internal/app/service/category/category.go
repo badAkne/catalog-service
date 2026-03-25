@@ -130,6 +130,10 @@ func (s *service) SomeMethod(ctx context.Context, req entity.RequestCategoryCrea
 
 		log.Debug().Msg("about to get category in tx")
 		category, err = s.repoCategory.Get(ctx, guid)
+		if err != nil {
+			log.Debug().Msgf("failed to get category %w", err)
+			return err
+		}
 
 		log.Debug().Interface("category", category).Msg("got category")
 
