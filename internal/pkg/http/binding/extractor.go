@@ -102,7 +102,7 @@ func NewRespondentManifestExtractor(status, errorCode int, message string) respo
 
 func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translator) {
 	//lte - less than or equal
-	v.RegisterTranslation(
+	err := v.RegisterTranslation(
 		"lte",
 		trans,
 		func(ut ut.Translator) error {
@@ -113,8 +113,11 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 			return t
 		})
 
+	if err != nil {
+		log.Debug().Msgf("unable to register translation to russian: %s", err.Error())
+	}
 	//gte - greater than or equal
-	v.RegisterTranslation(
+	err = v.RegisterTranslation(
 		"gte",
 		trans,
 		func(ut ut.Translator) error {
@@ -125,8 +128,11 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 			return t
 		})
 
+	if err != nil {
+		log.Debug().Msgf("unable to register translation to russian: %s", err.Error())
+	}
 	// oneof
-	v.RegisterTranslation(
+	err = v.RegisterTranslation(
 		"oneof",
 		trans,
 		func(ut ut.Translator) error {
@@ -136,9 +142,12 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 			t, _ := ut.T("lte", fe.Field(), fe.Param())
 			return t
 		})
+	if err != nil {
+		log.Debug().Msgf("unable to register translation to russian: %s", err.Error())
+	}
 
 	//uuid
-	v.RegisterTranslation(
+	err = v.RegisterTranslation(
 		"uuid",
 		trans,
 		func(ut ut.Translator) error {
@@ -150,8 +159,12 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 		},
 	)
 
+	if err != nil {
+		log.Debug().Msgf("unable to register translation to russian: %s", err.Error())
+	}
+
 	//email
-	v.RegisterTranslation(
+	err = v.RegisterTranslation(
 		"email",
 		trans,
 		func(ut ut.Translator) error {
@@ -162,4 +175,8 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 			return t
 		},
 	)
+
+	if err != nil {
+		log.Debug().Msgf("unable to register translation to russian: %s", err.Error())
+	}
 }
