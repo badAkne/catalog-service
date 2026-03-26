@@ -19,7 +19,7 @@ var (
 )
 var (
 	ErrMalformedSource  = errors.New("malformed request source")
-	ErrValidationDailed = (*validationFailedError)(nil)
+	ErrValidationFailed = (*validationFailedError)(nil)
 )
 
 type validationFailedError struct {
@@ -54,7 +54,7 @@ func init() {
 		log.Panic().Msg("Failed to register EN translations: " + err.Error())
 	}
 
-	defaultRuTranslator, found := uni.GetTranslator("ru")
+	defaultRuTranslator, found = uni.GetTranslator("ru")
 	if !found {
 		log.Panic().Msg("RU translator not found")
 	}
@@ -129,7 +129,7 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 		})
 
 	if err != nil {
-		log.Debug().Msgf("unable to register translation to russian: %s", err.Error())
+		log.Panic().Msgf("unable to register translation to russian: %s", err.Error())
 	}
 	// oneof
 	err = v.RegisterTranslation(
@@ -139,11 +139,11 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 			return ut.Add("oneof", "Поле{0} должно быть одним из: {1}", true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
-			t, _ := ut.T("lte", fe.Field(), fe.Param())
+			t, _ := ut.T("oneof", fe.Field(), fe.Param())
 			return t
 		})
 	if err != nil {
-		log.Debug().Msgf("unable to register translation to russian: %s", err.Error())
+		log.Panic().Msgf("unable to register translation to russian: %s", err.Error())
 	}
 
 	//uuid
@@ -160,7 +160,7 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 	)
 
 	if err != nil {
-		log.Debug().Msgf("unable to register translation to russian: %s", err.Error())
+		log.Panic().Msgf("unable to register translation to russian: %s", err.Error())
 	}
 
 	//email
@@ -177,6 +177,6 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 	)
 
 	if err != nil {
-		log.Debug().Msgf("unable to register translation to russian: %s", err.Error())
+		log.Panic().Msgf("unable to register translation to russian: %s", err.Error())
 	}
 }
