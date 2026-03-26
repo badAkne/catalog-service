@@ -77,11 +77,13 @@ func (r *repoPG) GetList(ctx context.Context) ([]entity.Category, error) {
 func (r *repoPG) Update(ctx context.Context, guid uuid.UUID, name string) (entity.Category, error) {
 	var category entity.Category
 
-	_, err := r.NewUpdate().Model(&category).Set("name = ?, updated_at = NOW()", name).Where("guid = ?", guid).Exec(ctx)
+	err := r.NewUpdate().Model(&category).Set("name = ?, updated_at = NOW()", name).Where("guid = ?", guid).Returning("*").Scan(ctx, &category)
 	if err != nil {
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) && pgErr.Field('C') == "23505" {
 			return entity.Category{}, entity.ErrCategoryAlreadyExists
+		} else if errors.Is(err, sql.ErrNoRows) {
+			return entity.Category{}, entity.ErrNotFound
 		}
 
 		return entity.Category{}, fmt.Errorf("unable to update category: %w", err)
@@ -91,18 +93,17 @@ func (r *repoPG) Update(ctx context.Context, guid uuid.UUID, name string) (entit
 }
 
 func (r *repoPG) Delete(ctx context.Context, guid uuid.UUID) error {
-	res, err := r.NewDelete().Model((*entity.Category)(nil)).Where("guid = ?", guid).Exec(ctx)
+	var category entity.Category
+	err := r.NewDelete().Model((*entity.Category)(nil)).Where("guid = ?", guid).Returning("*").Scan(ctx, &category)
 	if err != nil {
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) && pgErr.Field('C') == "23503" {
 			return entity.ErrCategoryHasRelation
+		} else if errors.Is(err, sql.ErrNoRows) {
+			return entity.ErrNotFound
 		}
 
 		return fmt.Errorf("unable to delete category: %w", err)
-	}
-
-	if rows, _ := res.RowsAffected(); rows == 0 {
-		return entity.ErrNotFound
 	}
 
 	return nil
