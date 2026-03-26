@@ -5,14 +5,17 @@ import (
 
 	"github.com/badAkne/catalog-service/internal/pkg/http/respondent"
 	"github.com/go-playground/locales/en"
+	"github.com/go-playground/locales/ru"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	entr "github.com/go-playground/validator/v10/translations/en"
+	rutr "github.com/go-playground/validator/v10/translations/ru"
 	"github.com/rs/zerolog/log"
 )
 
 var (
 	defaultEnTranslator ut.Translator
+	defaultRuTranslator ut.Translator
 )
 var (
 	ErrMalformedSource  = errors.New("malformed request source")
@@ -37,7 +40,9 @@ func init() {
 	v, _ := Validator.Engine().(*validator.Validate)
 
 	enLocale := en.New()
-	uni := ut.New(enLocale, enLocale)
+	ruLocale := ru.New()
+
+	uni := ut.New(enLocale, enLocale, ruLocale)
 
 	var found bool
 	defaultEnTranslator, found = uni.GetTranslator("en")
@@ -48,6 +53,17 @@ func init() {
 	if err := entr.RegisterDefaultTranslations(v, defaultEnTranslator); err != nil {
 		log.Panic().Msg("Failed to register EN translations: " + err.Error())
 	}
+
+	defaultRuTranslator, found := uni.GetTranslator("ru")
+	if !found {
+		log.Panic().Msg("RU translator not found")
+	}
+
+	if err := rutr.RegisterDefaultTranslations(v, defaultRuTranslator); err != nil {
+		log.Panic().Msg("Failed to register RU translations: " + err.Error())
+	}
+
+	registerCustomRussianTranslations(v, defaultRuTranslator)
 }
 
 func NewRespondentManifestExtractor(status, errorCode int, message string) respondent.ManifestExtractor {
@@ -59,8 +75,8 @@ func NewRespondentManifestExtractor(status, errorCode int, message string) respo
 		}
 
 		var errList validator.ValidationErrors
-		if list, ok := err.(validator.ValidationErrors); ok {
-			errList = list
+		if errList1, ok := err.(validator.ValidationErrors); ok {
+			errList = errList1
 		} else if typedErr, ok := err.(*validationFailedError); ok {
 			errList = typedErr.originalErr
 		} else {
@@ -70,14 +86,80 @@ func NewRespondentManifestExtractor(status, errorCode int, message string) respo
 		manifest.ErrorDetails = make([]string, len(errList))
 
 		for i := 0; i < len(errList); i++ {
-			if defaultEnTranslator != nil {
+			switch {
+			case defaultRuTranslator != nil:
+				manifest.ErrorDetails[i] = errList[i].Translate(defaultRuTranslator)
+			case defaultEnTranslator != nil:
 				manifest.ErrorDetails[i] = errList[i].Translate(defaultEnTranslator)
-			} else {
-				manifest.ErrorDetails[i] = errList[i].Error()
+			default:
+				manifest.ErrorDetails[i] = errList.Error()
 			}
-
 		}
 
 		return &manifest
 	}
+}
+
+func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translator) {
+	//lte - less than or equal
+	v.RegisterTranslation(
+		"lte",
+		trans,
+		func(ut ut.Translator) error {
+			return ut.Add("lte", "Поле {0} должно быть {1} или меньше", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("lte", fe.Field(), fe.Param())
+			return t
+		})
+
+	//gte - greater than or equal
+	v.RegisterTranslation(
+		"gte",
+		trans,
+		func(ut ut.Translator) error {
+			return ut.Add("gte", "Поле {0} должно быть больше или равно {1}", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("gte", fe.Field(), fe.Param())
+			return t
+		})
+
+	// oneof
+	v.RegisterTranslation(
+		"oneof",
+		trans,
+		func(ut ut.Translator) error {
+			return ut.Add("oneof", "Поле{0} должно быть одним из: {1}", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("lte", fe.Field(), fe.Param())
+			return t
+		})
+
+	//uuid
+	v.RegisterTranslation(
+		"uuid",
+		trans,
+		func(ut ut.Translator) error {
+			return ut.Add("uuid", "Поле {0} должно быть валидным UUID", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("uuid", fe.Field())
+			return t
+		},
+	)
+
+	//email
+	v.RegisterTranslation(
+		"email",
+		trans,
+		func(ut ut.Translator) error {
+			return ut.Add("email", "Поле {0} должно быть корректным email адресом", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("email", fe.Field())
+			return t
+		},
+	)
 }
