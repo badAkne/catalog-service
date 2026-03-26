@@ -56,12 +56,13 @@ func errorApplyDetail(ctx context.Context, detail string) {
 }
 
 func errorTryAcquireHandling(ctx context.Context) bool {
-	val := ctx.Value(_ContextKeyError{})
+	errV, _ := ctx.Value(_ContextKeyError{}).(*_ContextValueError)
 
-	if errV, ok := val.(*_ContextValueError); ok && (errV == nil || errV.isHandled) {
+	if errV == nil || errV.isHandled {
 		return false
 	}
 
+	errV.isHandled = true
 	return true
 }
 

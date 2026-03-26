@@ -48,6 +48,8 @@ func NewHttp(hHealth rhandler.Health, hCategory rhandler.Category, hProduct rhan
 		httph.NewErrorMiddleware(),
 
 		logMW,
+
+		makeErrorMiddleware(),
 	)
 
 	r.NotFoundHandler = http.HandlerFunc(handlerNotFound)
