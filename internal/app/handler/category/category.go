@@ -24,7 +24,6 @@ func NewHandler(serviceCategory rservice.Category) rhandler.Category {
 func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 	var reqCategory entity.RequestCategoryCreate
 	if err := binding.ScanAndValidateJSON(r, &reqCategory); err != nil {
-		httph.SendError(w, http.StatusBadRequest, entity.ErrIncorrectParameters)
 		httph.ErrorApply(r, err)
 		return
 	}
@@ -34,12 +33,10 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 	resCategory, err := h.serviceCategory.Create(r.Context(), reqCategory)
 	if err != nil {
 		if errors.Is(err, entity.ErrCategoryAlreadyExists) {
-			httph.SendError(w, http.StatusBadRequest, err)
 			httph.ErrorApply(r, err)
 			return
 		}
 
-		httph.SendError(w, http.StatusInternalServerError, err)
 		httph.ErrorApply(r, err)
 		return
 	}
@@ -51,7 +48,6 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	guid, err := uuid.Parse(vars["category_guid"])
 	if err != nil {
-		httph.SendError(w, http.StatusBadRequest, err)
 		httph.ErrorApply(r, err)
 		return
 	}
@@ -59,12 +55,10 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	category, err := h.serviceCategory.Get(r.Context(), guid)
 	if err != nil {
 		if errors.Is(err, entity.ErrNotFound) {
-			httph.SendError(w, http.StatusNotFound, entity.ErrNotFound)
 			httph.ErrorApply(r, err)
 			return
 		}
 
-		httph.SendError(w, http.StatusInternalServerError, err)
 		httph.ErrorApply(r, err)
 		return
 	}
@@ -75,7 +69,6 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *handler) GetList(w http.ResponseWriter, r *http.Request) {
 	categories, err := h.serviceCategory.GetList(r.Context())
 	if err != nil {
-		httph.SendError(w, http.StatusInternalServerError, err)
 		httph.ErrorApply(r, err)
 		return
 	}
@@ -88,14 +81,12 @@ func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	guid, err := uuid.Parse(vars["category_guid"])
 	if err != nil {
-		httph.SendError(w, http.StatusBadRequest, err)
 		httph.ErrorApply(r, err)
 		return
 	}
 
 	var category entity.RequestCategoryCreate
 	if err := binding.ScanAndValidateJSON(r, &category); err != nil {
-		httph.SendError(w, http.StatusBadRequest, entity.ErrIncorrectParameters)
 		httph.ErrorApply(r, err)
 		return
 	}
@@ -105,16 +96,13 @@ func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
 	newCategory, err := h.serviceCategory.Update(r.Context(), guid, category.Name)
 	if err != nil {
 		if errors.Is(err, entity.ErrNotFound) {
-			httph.SendError(w, http.StatusNotFound, err)
 			httph.ErrorApply(r, err)
 			return
 		} else if errors.Is(err, entity.ErrCategoryAlreadyExists) {
-			httph.SendError(w, http.StatusConflict, err)
 			httph.ErrorApply(r, err)
 			return
 		}
 
-		httph.SendError(w, http.StatusInternalServerError, err)
 		httph.ErrorApply(r, err)
 		return
 	}
@@ -126,7 +114,6 @@ func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	guid, err := uuid.Parse(vars["category_guid"])
 	if err != nil {
-		httph.SendError(w, http.StatusBadRequest, err)
 		httph.ErrorApply(r, err)
 		return
 	}
@@ -134,16 +121,13 @@ func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 	err = h.serviceCategory.Delete(r.Context(), guid)
 	if err != nil {
 		if errors.Is(err, entity.ErrCategoryHasRelation) {
-			httph.SendError(w, http.StatusConflict, err)
 			httph.ErrorApply(r, err)
 			return
 		} else if errors.Is(err, entity.ErrNotFound) {
-			httph.SendError(w, http.StatusBadRequest, err)
 			httph.ErrorApply(r, err)
 			return
 		}
 
-		httph.SendError(w, http.StatusInternalServerError, err)
 		httph.ErrorApply(r, err)
 		return
 	}
