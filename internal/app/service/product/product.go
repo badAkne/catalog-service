@@ -2,7 +2,6 @@ package mproduct
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/badAkne/catalog-service/internal/app/entity"
@@ -25,14 +24,12 @@ func (s *service) Create(ctx context.Context, req entity.RequestProductCreate) (
 
 	var newProduct entity.Product
 
-	guid, err := uuid.NewV7()
-	if err != nil {
-		return entity.ResponseProductCreate{}, fmt.Errorf("unable to create guid for product: %w", err)
-	}
+	guid, _ := uuid.NewV7()
 
-	err = s.repoProduct.InsideTx(ctx, func(ctx context.Context) error {
+	err := s.repoProduct.InsideTx(ctx, func(ctx context.Context) error {
 
-		if err := s.repoProduct.IsExistWithName(ctx, req.Name); err != nil {
+		err := s.repoProduct.IsExistWithName(ctx, req.Name)
+		if err != nil {
 			return err
 		}
 
@@ -51,6 +48,7 @@ func (s *service) Create(ctx context.Context, req entity.RequestProductCreate) (
 
 		return nil
 	})
+
 	if err != nil {
 		return entity.ResponseProductCreate{}, err
 	}
@@ -59,7 +57,7 @@ func (s *service) Create(ctx context.Context, req entity.RequestProductCreate) (
 			Name:         newProduct.Name,
 			GUID:         newProduct.GUID,
 			Price:        newProduct.Price,
-			CategoryGUID: newProduct.GUID,
+			CategoryGUID: newProduct.CategoryGUID,
 			Description:  newProduct.Description,
 		},
 		err

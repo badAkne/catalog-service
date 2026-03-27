@@ -26,3 +26,14 @@ build: ## Сборка приложения
 .PHONY: test
 test: ## Запуск тестов
 	go test -count=1 -v ./...
+
+.PHONY: cover
+cover: ## Просмотр покрытия
+	go test -short -count=1 -race -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out
+	rm coverage.out
+
+.PHONY: generate-mocks
+generate-mocks: ##Генерация моков
+	chmod +x scripts/generate_mocks.sh
+	export PATH=$$PATH:$$HOME/go/bin && ./scripts/generate_mocks.sh
