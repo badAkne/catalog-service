@@ -30,4 +30,8 @@ type (
 	Transactional interface {
 		InsideTx(ctx context.Context, cb func(ctx context.Context) error) error
 	}
+
+	Migrate interface {
+		Migrate(ctx context.Context) (oldVer, newVer int64, err error)
+	}
 )

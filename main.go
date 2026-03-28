@@ -1,72 +1,32 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"os"
 
-	"github.com/badAkne/catalog-service/internal/app/config"
-	rcategory "github.com/badAkne/catalog-service/internal/app/handler/category"
-	rhealth "github.com/badAkne/catalog-service/internal/app/handler/health"
-	rproduct "github.com/badAkne/catalog-service/internal/app/handler/product"
-	rprocessor "github.com/badAkne/catalog-service/internal/app/processor/http"
-	pcategory "github.com/badAkne/catalog-service/internal/app/repository/category"
-	rcpostgres "github.com/badAkne/catalog-service/internal/app/repository/conn/postgres"
-	pproduct "github.com/badAkne/catalog-service/internal/app/repository/product"
-	mcategory "github.com/badAkne/catalog-service/internal/app/service/category"
-	mproduct "github.com/badAkne/catalog-service/internal/app/service/product"
-	"github.com/rs/zerolog/log"
+	"github.com/badAkne/catalog-service/cmd"
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
-	ctx := context.Background()
+	flag := &cli.BoolFlag{
+		Name:    "no-json",
+		Value:   true,
+		Usage:   "Человеко-читаемый формат для логов вместо JSON",
+		Aliases: []string{"nj"},
+	}
 
-	config.Load(config.LoadArgs{
-		Output:          os.Stdout,
-		EnableSimpleLog: true,
-		SkipConfig:      false,
-	})
+	app := cli.App{
+		Name:     "catalog-service",
+		Version:  "1.0",
+		Usage:    "catalog-service [global options] command [command options]",
+		Commands: []*cli.Command{cmd.Migrate()},
+		Flags:    []cli.Flag{flag},
+	}
 
-	log.Info().Msg("Application started")
-	log.Debug().Msg("This is debug level")
-
-	cfg := config.Root
-
-	pgClient, err := rcpostgres.NewConn(ctx, cfg.Repository.Postgres)
+	err := app.Run(os.Args)
 	if err != nil {
-		log.Printf("%s", err.Error())
+		fmt.Fprintln(os.Stderr, err)
 	}
 
-	oldVer, newVer, err := pgClient.Migrate(ctx)
-	if err != nil {
-		log.Fatal().Msg("failed to run migrations")
-	}
-
-	if oldVer != newVer {
-		log.Printf("old_version:%d\nnew_version:%d\ndatabase migrated\n", oldVer, newVer)
-	} else {
-		log.Printf("version:%d\ndatabase is up to date ", newVer)
-	}
-
-	categoryRepo, err := pcategory.NewRepoFromPostgres(ctx, pgClient)
-	if err != nil {
-		log.Fatal().Msgf("%s", err.Error())
-	}
-
-	repoProduct, err := pproduct.NewRepoFromPostgres(ctx, pgClient)
-	if err != nil {
-		log.Fatal().Msgf("unable to create product: %s", err.Error())
-	}
-
-	categoryService := mcategory.NewService(categoryRepo)
-	productService := mproduct.NewService(repoProduct)
-
-	hHandler := rhealth.NewHandler()
-	categoryHandler := rcategory.NewHandler(categoryService)
-	productHandler := rproduct.NewHandler(productService)
-
-	proc := rprocessor.NewHttp(hHandler, categoryHandler, productHandler, cfg.Processor.WebServer)
-
-	if err := proc.Serve(); err != nil {
-		log.Fatal().Msg(err.Error())
-	}
 }
