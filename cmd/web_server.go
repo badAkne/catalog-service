@@ -22,7 +22,7 @@ func WebServer() *cli.Command {
 		Name:            "web-server",
 		Aliases:         []string{"web", "http"},
 		Usage:           cmdWebServerUsage,
-		Description:     strings.TrimSpace(cmdMigrateDescription),
+		Description:     strings.TrimSpace(cmdWebServerDescription),
 		Action:          cmdWebServer,
 		HideHelpCommand: true,
 	}
