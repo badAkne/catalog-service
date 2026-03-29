@@ -20,7 +20,7 @@ func main() {
 		Name:     "catalog-service",
 		Version:  "1.0",
 		Usage:    "catalog-service [global options] command [command options]",
-		Commands: []*cli.Command{cmd.Migrate()},
+		Commands: []*cli.Command{cmd.Migrate(), cmd.WebServer()},
 		Flags:    []cli.Flag{flag},
 	}
 

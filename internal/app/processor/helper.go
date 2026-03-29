@@ -2,6 +2,7 @@ package processor
 
 import (
 	"context"
+	"io"
 	"sync"
 )
 
@@ -21,5 +22,17 @@ func Wrap(ctx context.Context, wg *sync.WaitGroup, cb func(context.Context)) {
 		default:
 			cb(ctx)
 		}
+	}()
+}
+
+func WatchForShutdown(ctx context.Context, wg *sync.WaitGroup, closer io.Closer) {
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		<-ctx.Done()
+
+		_ = closer.Close()
 	}()
 }
