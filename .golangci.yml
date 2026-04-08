@@ -1,5 +1,5 @@
 run:
-  go: "1.24"
+  go: '1.25'
   deadline: 2m
   timeout: 3m
   build-tags:
@@ -102,7 +102,7 @@ linters-settings:
           - $gomodname
           - github.com
         deny:
-          - pkg: "emperror.dev/errors"
+          - pkg: 'emperror.dev/errors'
             desc: should be replaced by "github.com/pkg/errors"
   wrapcheck:
     ignoreSigs:
@@ -120,7 +120,7 @@ linters-settings:
     asserts: false
 issues:
   exclude-rules:
-    - path: "cmd" # drop this after migration to 1.54
+    - path: 'cmd' # drop this after migration to 1.54
       linters:
         - nolintlint
     - path: ".*_test\\.go$"
@@ -129,8 +129,8 @@ issues:
         - goconst
         - gocyclo
   exclude-files:
-    - "init.go"
-    - "_mock.go"
-    - ".*_test.go$"
+    - 'init.go'
+    - '_mock.go'
+    - '.*_test.go$'
   exclude-dirs:
-    - "semgrep-rules"
+    - 'semgrep-rules'
