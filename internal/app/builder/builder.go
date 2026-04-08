@@ -12,9 +12,12 @@ import (
 	"github.com/badAkne/catalog-service/internal/app/config"
 	rhandler "github.com/badAkne/catalog-service/internal/app/handler"
 	rcategory "github.com/badAkne/catalog-service/internal/app/handler/category"
+	"github.com/badAkne/catalog-service/internal/app/handler/grpc/catalog"
 	rhealth "github.com/badAkne/catalog-service/internal/app/handler/health"
 	rproduct "github.com/badAkne/catalog-service/internal/app/handler/product"
 	"github.com/badAkne/catalog-service/internal/app/processor"
+	gatewayprocessor "github.com/badAkne/catalog-service/internal/app/processor/gateway"
+	grpcprocessor "github.com/badAkne/catalog-service/internal/app/processor/grpc"
 	rprocessor "github.com/badAkne/catalog-service/internal/app/processor/http"
 	pprocessor "github.com/badAkne/catalog-service/internal/app/processor/other"
 	"github.com/badAkne/catalog-service/internal/app/repository"
@@ -48,6 +51,8 @@ type Builder struct {
 	healthHandler   rhandler.Health
 	categoryHandler rhandler.Category
 	productHandler  rhandler.Product
+
+	grpcCatalogHandler *catalog.Handler
 
 	processors []processor.Processor
 }
@@ -97,6 +102,7 @@ func (b *Builder) Run() {
 	}
 
 	b.wg.Wait()
+	log.Info().Msg("All processors finished")
 }
 
 func (b *Builder) BuildRepoConnPostgres() {
@@ -213,6 +219,12 @@ func (b *Builder) BuildHandlerHttpProduct() {
 	}, b.productService)
 }
 
+func (b *Builder) BuildHandlerGrpcCatalog() {
+	b.exec(true, func(b *Builder) {
+		b.grpcCatalogHandler = catalog.NewHandler(b.productService)
+	}, b.productService)
+}
+
 func (b *Builder) BuildProcHttp() {
 	b.exec(true, func(b *Builder) {
 		procHttp := rprocessor.NewHttp(b.healthHandler, b.categoryHandler, b.productHandler, nil, b.cfg.Processor.WebServer)
@@ -221,10 +233,25 @@ func (b *Builder) BuildProcHttp() {
 	}, b.healthHandler, b.productHandler, b.categoryHandler)
 }
 
+func (b *Builder) BuildProcGrpc() {
+	b.exec(true, func(b *Builder) {
+		var procGrpc = grpcprocessor.NewGrpc(b.grpcCatalogHandler, b.cfg.Processor.Grpc)
+
+		b.processors = append(b.processors, procGrpc)
+	}, b.grpcCatalogHandler)
+}
+
+func (b *Builder) BuildProcGrpcGateway() {
+	b.exec(true, func(b *Builder) {
+		var procGateway = gatewayprocessor.NewGateway(b.cfg.Processor.Gateway)
+		b.processors = append(b.processors, procGateway)
+	})
+}
+
 func (b *Builder) waitForSignal(sig chan os.Signal, cancel func()) {
 	defer cancel()
 	signal := <-sig
-	log.Info().Msgf("Catched %s signal", signal.String())
+	log.Info().Msgf("Catched %s signal, shutting down", signal.String())
 }
 
 func (b *Builder) printErrors() {

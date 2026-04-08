@@ -2,6 +2,8 @@ OUTPUT:=./bin/app
 GO_LINT_VERSION=1.64.8
 
 GO_FILE:=./main.go
+PROTO_DIRS = -I api -I proto_deps/googleapis -I proto_deps/protovalidate/proto/protovalidate
+PROTO_FILES = $(shell find api -name '*.proto')
 
 .PHONY: up
 up: ## Поднимает (запускает) окружение для работы приложения
@@ -37,3 +39,14 @@ cover: ## Просмотр покрытия
 generate-mocks: ##Генерация моков
 	chmod +x scripts/generate_mocks.sh
 	export PATH=$$PATH:$$HOME/go/bin && ./scripts/generate_mocks.sh
+
+.PHONY: gen
+gen:
+	rm -rf gen
+	mkdir gen
+	export PATH=$$PATH:$$HOME/go/bin && protoc $(PROTO_DIRS) \
+		--go_out=gen --go_opt=paths=source_relative \
+		--go-grpc_out=gen --go-grpc_opt=paths=source_relative \
+		--go-grpc_opt=require_unimplemented_servers=false \
+		--grpc-gateway_out=gen --grpc-gateway_opt=paths=source_relative \
+		$(PROTO_FILES)

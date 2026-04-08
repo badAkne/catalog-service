@@ -44,7 +44,11 @@ func cmdWebServer(cCtx *cli.Context) error {
 	app.BuildHandlerHttpCategory()
 	app.BuildHandlerHttpProduct()
 
+	app.BuildHandlerGrpcCatalog()
+
 	app.BuildProcHttp()
+	app.BuildProcGrpc()
+	app.BuildProcGrpcGateway()
 
 	app.Run()
 

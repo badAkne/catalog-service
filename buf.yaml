@@ -1,0 +1,13 @@
+version: v2
+modules:
+  - path: proto_deps/googleapis
+  - path: proto_deps/protovalidate
+  - path: api
+deps:
+  - buf.build/grpc-ecosystem/grpc-gateway
+lint:
+  use:
+    - STANDARD
+breaking:
+  use:
+    - FILE
