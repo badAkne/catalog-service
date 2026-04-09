@@ -14,7 +14,7 @@ type _ContextValueError struct {
 }
 
 func errorPrepare(ctx context.Context) context.Context {
-	var errCtx = new(_ContextValueError)
+	errCtx := new(_ContextValueError)
 	return context.WithValue(ctx, _ContextKeyError{}, errCtx)
 }
 
@@ -39,7 +39,6 @@ func errorGetDetail(ctx context.Context) string {
 }
 
 func errorApply(ctx context.Context, err error) {
-
 	val := ctx.Value(_ContextKeyError{})
 
 	if errV, ok := val.(*_ContextValueError); ok {

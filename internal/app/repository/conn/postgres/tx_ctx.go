@@ -9,7 +9,6 @@ import (
 type _ctxKeyTx struct{}
 
 func getTxFromContext(ctx context.Context) bun.Tx {
-
 	tx, _ := ctx.Value(_ctxKeyTx{}).(bun.Tx)
 
 	return tx

@@ -24,7 +24,7 @@ func makeErrorMiddleware() httph.Middleware {
 		_50001D = "Try again later"
 	)
 
-	var makeFallbackExtractor = func(status, errorCode int, message, detail string) respondent.ManifestExtractor {
+	makeFallbackExtractor := func(status, errorCode int, message, detail string) respondent.ManifestExtractor {
 		genericManifest := respondent.Manifest{
 			Status:      status,
 			ErrorCode:   errorCode,
@@ -37,7 +37,7 @@ func makeErrorMiddleware() httph.Middleware {
 
 	replacer := respondent.NewSimpleReplacer().ReplaceBy(sql.ErrNoRows, entity.ErrNotFound)
 
-	var expander = respondent.NewSimpleExpander().ExtractFor(
+	expander := respondent.NewSimpleExpander().ExtractFor(
 		binding.ErrValidationFailed,
 		binding.NewRespondentManifestExtractor(http.StatusBadRequest, 40001, _40001)).
 		WithoutDetail(entity.ErrCategoryAlreadyExists, http.StatusBadRequest, 40002, _40002).

@@ -58,7 +58,7 @@ type Builder struct {
 }
 
 func NewBuilder(cCtx *cli.Context) *Builder {
-	var b = Builder{
+	b := Builder{
 		cCtx:     cCtx,
 		ctx:      context.Background(),
 		chErrors: make(chan error, 4096),
@@ -135,7 +135,6 @@ func (b *Builder) BuilderRepoCategory() {
 
 		b.categoryRepo = categoryRepo
 	}, b.connPostgres)
-
 }
 
 func (b *Builder) BuilderRepoProduct() {
@@ -235,7 +234,7 @@ func (b *Builder) BuildProcHttp() {
 
 func (b *Builder) BuildProcGrpc() {
 	b.exec(true, func(b *Builder) {
-		var procGrpc = grpcprocessor.NewGrpc(b.grpcCatalogHandler, b.cfg.Processor.Grpc)
+		procGrpc := grpcprocessor.NewGrpc(b.grpcCatalogHandler, b.cfg.Processor.Grpc)
 
 		b.processors = append(b.processors, procGrpc)
 	}, b.grpcCatalogHandler)
@@ -243,7 +242,7 @@ func (b *Builder) BuildProcGrpc() {
 
 func (b *Builder) BuildProcGrpcGateway() {
 	b.exec(true, func(b *Builder) {
-		var procGateway = gatewayprocessor.NewGateway(b.cfg.Processor.Gateway)
+		procGateway := gatewayprocessor.NewGateway(b.cfg.Processor.Gateway)
 		b.processors = append(b.processors, procGateway)
 	})
 }

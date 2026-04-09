@@ -38,7 +38,6 @@ func NewGrpc(handler *catalog.Handler, cfg section.ProcessorGrpc) processor.Proc
 func (p *grpcProc) StartAsync(ctx context.Context, wg *sync.WaitGroup) {
 	var lc net.ListenConfig
 	l, err := lc.Listen(ctx, "tcp", p.addr)
-
 	if err != nil {
 		log.Fatal().Err(err).Str("listen_addr:", p.addr).Msg("Failed to start listening TCP addr for gRPC server")
 		return

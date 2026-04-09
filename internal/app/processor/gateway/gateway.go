@@ -65,7 +65,6 @@ func (g *gatewayProc) StartAsync(ctx context.Context, wg *sync.WaitGroup) {
 		if err = g.server.Serve(l); err != nil {
 			log.Fatal().Err(err).Msgf("Unable to start grpc server: %s", err.Error())
 		}
-
 	}()
 
 	processor.WatchForShutdown(ctx, wg, util.CloserFunc(l.Close))

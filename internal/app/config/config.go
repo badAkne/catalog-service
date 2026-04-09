@@ -28,7 +28,6 @@ type (
 var Root Config
 
 func Load(args LoadArgs) {
-
 	zerolog.TimestampFieldName = "timestamp"
 	zerolog.MessageFieldName = "msg"
 	zerolog.TimeFieldFormat = time.RFC3339

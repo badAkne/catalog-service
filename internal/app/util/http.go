@@ -6,7 +6,7 @@ import (
 )
 
 func IsFilteredWithHttp(r *http.Request) bool {
-	var path = r.RequestURI
+	path := r.RequestURI
 
 	for _, word := range strings.Split(path, "/") {
 		if word == "health" || word == "debug" || word == "metric" {

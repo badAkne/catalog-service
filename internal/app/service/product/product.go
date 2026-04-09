@@ -21,13 +21,11 @@ func NewService(repoProduct repository.Product) rservice.Product {
 }
 
 func (s *service) Create(ctx context.Context, req entity.RequestProductCreate) (entity.ResponseProductCreate, error) {
-
 	var newProduct entity.Product
 
 	guid, _ := uuid.NewV7()
 
 	err := s.repoProduct.InsideTx(ctx, func(ctx context.Context) error {
-
 		err := s.repoProduct.IsExistWithName(ctx, req.Name)
 		if err != nil {
 			return err
@@ -48,7 +46,6 @@ func (s *service) Create(ctx context.Context, req entity.RequestProductCreate) (
 
 		return nil
 	})
-
 	if err != nil {
 		return entity.ResponseProductCreate{}, err
 	}
@@ -102,7 +99,6 @@ func (s *service) GetList(ctx context.Context, req entity.RequestProductGetList)
 }
 
 func (s *service) Update(ctx context.Context, guid uuid.UUID, req entity.RequestProductUpdate) (entity.ResponseProductCreate, error) {
-
 	product := entity.Product{
 		GUID:         guid,
 		Name:         req.Name,

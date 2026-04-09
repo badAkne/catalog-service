@@ -59,7 +59,7 @@ func NewHttp(hHealth rhandler.Health, hCategory rhandler.Category, hProduct rhan
 
 	r.NotFoundHandler = http.HandlerFunc(handlerNotFound)
 
-	var rV1 = r.PathPrefix("/v1").Subrouter()
+	rV1 := r.PathPrefix("/v1").Subrouter()
 	if hCategory != nil {
 		v1RegCategoryHandler(rV1, hCategory)
 	}
@@ -69,7 +69,6 @@ func NewHttp(hHealth rhandler.Health, hCategory rhandler.Category, hProduct rhan
 	vGenericRegHealthCheck(r, hHealth)
 
 	_ = r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-
 		path, _ := route.GetPathTemplate()
 
 		methods, _ := route.GetMethods()

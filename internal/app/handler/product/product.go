@@ -67,6 +67,7 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 
 	httph.SendJSON(w, http.StatusOK, product)
 }
+
 func (h *handler) GetList(w http.ResponseWriter, r *http.Request) {
 	var filters entity.RequestProductGetList
 	if err := binding.ScanAndValidateJSON(r, &filters); err != nil {
