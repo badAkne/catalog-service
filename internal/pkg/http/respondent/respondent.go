@@ -19,9 +19,7 @@ type HttpContext struct {
 	R *http.Request
 }
 
-var (
-	ErrBadExpander = errors.New("Respondent: expander is required")
-)
+var ErrBadExpander = errors.New("respondent: expander is required")
 
 func (rp *respondent) Callback(ctx any, err error) {
 	newErr := rp.replacer.Replace(err)
@@ -67,7 +65,7 @@ func newRespondent(expander Expander, replacer Replacer, applicator Applicator) 
 }
 
 func NewMiddleware(expander Expander, replacer Replacer, applicator Applicator) httph.Middleware {
-	var resp = newRespondent(expander, replacer, applicator)
+	resp := newRespondent(expander, replacer, applicator)
 
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

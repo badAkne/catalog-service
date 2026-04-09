@@ -24,7 +24,6 @@ func (sr *SimpleReplacer) Replace(err error) error {
 }
 
 func (sr *SimpleReplacer) ReplaceBy(original, replacement error) *SimpleReplacer {
-
 	if !errors.Is(original, replacement) &&
 		!errors.Is(original, nil) &&
 		!errors.Is(replacement, nil) {

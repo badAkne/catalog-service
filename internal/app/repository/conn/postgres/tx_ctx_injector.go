@@ -31,15 +31,16 @@ func (x *implBunIdbTxInjector) QueryContext(ctx context.Context, query string, a
 
 func (x *implBunIdbTxInjector) ExecContext(
 	ctx context.Context,
-	query string, args ...interface{}) (sql.Result, error) {
-
+	query string, args ...interface{},
+) (sql.Result, error) {
 	idb := x.getIDB(ctx)
 	return idb.ExecContext(ctx, query, args)
 }
 
 func (x *implBunIdbTxInjector) QueryRowContext(
 	ctx context.Context,
-	query string, args ...interface{}) *sql.Row {
+	query string, args ...interface{},
+) *sql.Row {
 	idb := x.getIDB(ctx)
 	return idb.QueryRowContext(ctx, query, args)
 }
@@ -85,7 +86,8 @@ func (x *implBunIdbTxInjector) BeginTx(ctx context.Context, opts *sql.TxOptions)
 func (x *implBunIdbTxInjector) RunInTx(
 	ctx context.Context,
 	opts *sql.TxOptions,
-	f func(ctx context.Context, tx bun.Tx) error) error {
+	f func(ctx context.Context, tx bun.Tx) error,
+) error {
 	return x.getIDB(ctx).RunInTx(ctx, opts, f)
 }
 

@@ -17,6 +17,7 @@ var (
 	defaultEnTranslator ut.Translator
 	defaultRuTranslator ut.Translator
 )
+
 var (
 	ErrMalformedSource  = errors.New("malformed request source")
 	ErrValidationFailed = (*validationFailedError)(nil)
@@ -75,14 +76,17 @@ func NewRespondentManifestExtractor(status, errorCode int, message string) respo
 		}
 
 		var errList validator.ValidationErrors
-		if errList1, ok := err.(validator.ValidationErrors); ok {
-			errList = errList1
-		} else if typedErr, ok := err.(*validationFailedError); ok {
-			errList = typedErr.originalErr
-		} else {
+		var validationErrs validator.ValidationErrors
+		var validationFailed *validationFailedError
+
+		switch {
+		case errors.As(err, &validationErrs):
+			errList = validationErrs
+		case errors.As(err, &validationFailed):
+			errList = validationFailed.originalErr
+		default:
 			return nil
 		}
-
 		manifest.ErrorDetails = make([]string, len(errList))
 
 		for i := 0; i < len(errList); i++ {
@@ -101,7 +105,7 @@ func NewRespondentManifestExtractor(status, errorCode int, message string) respo
 }
 
 func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translator) {
-	//lte - less than or equal
+	// lte - less than or equal
 	err := v.RegisterTranslation(
 		"lte",
 		trans,
@@ -112,11 +116,10 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 			t, _ := ut.T("lte", fe.Field(), fe.Param())
 			return t
 		})
-
 	if err != nil {
 		log.Debug().Msgf("unable to register translation to russian: %s", err.Error())
 	}
-	//gte - greater than or equal
+	// gte - greater than or equal
 	err = v.RegisterTranslation(
 		"gte",
 		trans,
@@ -127,7 +130,6 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 			t, _ := ut.T("gte", fe.Field(), fe.Param())
 			return t
 		})
-
 	if err != nil {
 		log.Panic().Msgf("unable to register translation to russian: %s", err.Error())
 	}
@@ -146,7 +148,7 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 		log.Panic().Msgf("unable to register translation to russian: %s", err.Error())
 	}
 
-	//uuid
+	// uuid
 	err = v.RegisterTranslation(
 		"uuid",
 		trans,
@@ -158,12 +160,11 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 			return t
 		},
 	)
-
 	if err != nil {
 		log.Panic().Msgf("unable to register translation to russian: %s", err.Error())
 	}
 
-	//email
+	// email
 	err = v.RegisterTranslation(
 		"email",
 		trans,
@@ -175,7 +176,6 @@ func registerCustomRussianTranslations(v *validator.Validate, trans ut.Translato
 			return t
 		},
 	)
-
 	if err != nil {
 		log.Panic().Msgf("unable to register translation to russian: %s", err.Error())
 	}

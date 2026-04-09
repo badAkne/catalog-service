@@ -20,7 +20,6 @@ func WithSkipper(skipper func(r *http.Request) bool) Option {
 			m.fromOptions.skipper = skipper
 		}
 	}
-
 }
 
 func WithStringExtractor(key string, callback CallbackExtractorString) Option {
@@ -30,7 +29,6 @@ func WithStringExtractor(key string, callback CallbackExtractorString) Option {
 			m.fromOptions.extStrOnSuccess = append(m.fromOptions.extStrOnSuccess, ext)
 			m.fromOptions.extStrOnFail = append(m.fromOptions.extStrOnFail, ext)
 		}
-
 	}
 }
 
@@ -59,7 +57,6 @@ func WithAnyExtractor(key string, callback CallbackExtractorAny) Option {
 			m.fromOptions.extAnyOnSuccess = append(m.fromOptions.extAnyOnSuccess, ext)
 			m.fromOptions.extAnyOnFail = append(m.fromOptions.extAnyOnFail, ext)
 		}
-
 	}
 }
 

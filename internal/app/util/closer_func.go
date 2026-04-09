@@ -18,7 +18,6 @@ func NewCloserContextFunc(
 	ctx context.Context,
 	timeout time.Duration,
 ) CloserFunc {
-
 	return func() error {
 		if timeout < 0 {
 			return nil

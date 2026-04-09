@@ -17,7 +17,6 @@ for incoming REST requests.
 )
 
 func WebServer() *cli.Command {
-
 	return &cli.Command{
 		Name:            "web-server",
 		Aliases:         []string{"web", "http"},
@@ -29,7 +28,7 @@ func WebServer() *cli.Command {
 }
 
 func cmdWebServer(cCtx *cli.Context) error {
-	var app = builder.NewBuilder(cCtx)
+	app := builder.NewBuilder(cCtx)
 
 	app.BuildConfig()
 
@@ -44,7 +43,11 @@ func cmdWebServer(cCtx *cli.Context) error {
 	app.BuildHandlerHttpCategory()
 	app.BuildHandlerHttpProduct()
 
+	app.BuildHandlerGrpcCatalog()
+
 	app.BuildProcHttp()
+	app.BuildProcGrpc()
+	app.BuildProcGrpcGateway()
 
 	app.Run()
 

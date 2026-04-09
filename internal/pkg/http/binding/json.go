@@ -14,7 +14,7 @@ func (jsonBinding) Name() string {
 }
 
 func (jsonBinding) Bind(req *http.Request, obj any) error {
-	if req == nil && req.Body == nil {
+	if req == nil {
 		return entity.ErrIncorrectParameters
 	}
 

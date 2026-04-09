@@ -21,7 +21,6 @@ func NewService(repoCategory repository.Category) rservice.Category {
 
 // pgdriver нужен для того, чтобы ловить ошибку от bun
 func (s *service) Create(ctx context.Context, req entity.RequestCategoryCreate) (entity.ResponseCategoryCreate, error) {
-
 	var newCategory entity.Category
 
 	guid, err := uuid.NewV7()
@@ -30,7 +29,6 @@ func (s *service) Create(ctx context.Context, req entity.RequestCategoryCreate) 
 	}
 
 	err = s.repoCategory.InsideTx(ctx, func(ctx context.Context) error {
-
 		if err := s.repoCategory.IsExistWithName(ctx, req.Name); err != nil {
 			return err
 		}
@@ -42,7 +40,6 @@ func (s *service) Create(ctx context.Context, req entity.RequestCategoryCreate) 
 
 		return nil
 	})
-
 	if err != nil {
 		return entity.ResponseCategoryCreate{}, err
 	}
@@ -88,7 +85,6 @@ func (s *service) GetList(ctx context.Context) ([]entity.ResponseCategoryCreate,
 
 func (s *service) Update(ctx context.Context, guid uuid.UUID, name string) (entity.ResponseCategoryCreate, error) {
 	category, err := s.repoCategory.Update(ctx, guid, name)
-
 	if err != nil {
 		return entity.ResponseCategoryCreate{}, err
 	}
