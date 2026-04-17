@@ -45,6 +45,7 @@ func cmdWebServer(cCtx *cli.Context) error {
 
 	app.BuildHandlerGrpcCatalog()
 
+	app.BuilMonitorPrometheus()
 	app.BuildProcHttp()
 	app.BuildProcGrpc()
 	app.BuildProcGrpcGateway()

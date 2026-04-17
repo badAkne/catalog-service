@@ -1,4 +1,4 @@
-FROM golang:1.24.1-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
@@ -16,8 +16,10 @@ WORKDIR /app
 
 COPY --from=builder /app/main .
 
-COPY .env .
-
 EXPOSE 8080
 
-ENTRYPOINT ["./main","web-server"]
+EXPOSE 50051
+
+EXPOSE 8081
+
+ENTRYPOINT ["./main","web"]

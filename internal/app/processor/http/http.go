@@ -67,6 +67,7 @@ func NewHttp(hHealth rhandler.Health, hCategory rhandler.Category, hProduct rhan
 		v1RegProductHandler(rV1, hProduct)
 	}
 	vGenericRegHealthCheck(r, hHealth)
+	vGenericRegMetrics(r)
 
 	_ = r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		path, _ := route.GetPathTemplate()

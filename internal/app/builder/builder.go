@@ -19,6 +19,7 @@ import (
 	gatewayprocessor "github.com/badAkne/catalog-service/internal/app/processor/gateway"
 	grpcprocessor "github.com/badAkne/catalog-service/internal/app/processor/grpc"
 	rprocessor "github.com/badAkne/catalog-service/internal/app/processor/http"
+	"github.com/badAkne/catalog-service/internal/app/processor/monitor"
 	pprocessor "github.com/badAkne/catalog-service/internal/app/processor/other"
 	"github.com/badAkne/catalog-service/internal/app/repository"
 	pcategory "github.com/badAkne/catalog-service/internal/app/repository/category"
@@ -208,6 +209,18 @@ func (b *Builder) BuildHandlerHttpCategory() {
 
 		b.categoryHandler = handler
 	}, b.categoryService)
+}
+
+func (b *Builder) BuilMonitorPrometheus() {
+	b.exec(true, func(b *Builder) {
+		if !b.cfg.Monitor.Enabled {
+			log.Info().Msg("Monitoring disabled")
+		}
+
+		promProc := monitor.NewPrometheusObserver()
+		b.processors = append(b.processors, promProc)
+		log.Info().Msg("Monitoring enabled")
+	})
 }
 
 func (b *Builder) BuildHandlerHttpProduct() {
