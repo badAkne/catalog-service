@@ -94,6 +94,7 @@ func (r *repoPg) Update(ctx context.Context, product entity.Product) (entity.Pro
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.Product{}, entity.ErrNotFound
 		}
+
 		var pgErr pgdriver.Error
 		if errors.As(err, &pgErr) {
 			switch pgErr.Field('C') {

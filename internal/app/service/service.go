@@ -5,6 +5,7 @@ import (
 
 	"github.com/badAkne/catalog-service/internal/app/entity"
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type (
@@ -21,5 +22,9 @@ type (
 		GetList(ctx context.Context, req entity.RequestProductGetList) ([]entity.ResponseProductCreate, error)
 		Update(ctx context.Context, guid uuid.UUID, req entity.RequestProductUpdate) (entity.ResponseProductCreate, error)
 		Delete(ctx context.Context, guid uuid.UUID) error
+	}
+
+	Metered interface {
+		ProvideMetrics(fact promauto.Factory) []entity.MetricObservation
 	}
 )
