@@ -30,6 +30,7 @@ import (
 	mproduct "github.com/badAkne/catalog-service/internal/app/service/product"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/grpc"
 )
 
 type Builder struct {
@@ -247,7 +248,7 @@ func (b *Builder) BuildProcHttp() {
 
 func (b *Builder) BuildProcGrpc() {
 	b.exec(true, func(b *Builder) {
-		procGrpc := grpcprocessor.NewGrpc(b.grpcCatalogHandler, b.cfg.Processor.Grpc)
+		procGrpc := grpcprocessor.NewGrpc(b.grpcCatalogHandler, make([]grpc.UnaryServerInterceptor, 0), make([]grpc.StreamServerInterceptor, 0), b.cfg.Processor.Grpc)
 
 		b.processors = append(b.processors, procGrpc)
 	}, b.grpcCatalogHandler)
