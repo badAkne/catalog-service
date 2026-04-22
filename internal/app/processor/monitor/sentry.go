@@ -8,12 +8,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/badAkne/catalog-service/internal/app/config/section"
+	"github.com/badAkne/catalog-service/internal/app/processor"
 	"github.com/getsentry/sentry-go"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-
-	"github.com/badAkne/catalog-service/internal/app/config/section"
-	"github.com/badAkne/catalog-service/internal/app/processor"
 )
 
 type sentryProc struct {
