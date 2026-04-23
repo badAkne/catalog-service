@@ -16,6 +16,13 @@ type (
 		Monitor    section.Monitor
 		Processor  section.Processor
 		Repository section.Repository
+		Meta       Meta `ignore:"true"`
+	}
+
+	Meta struct {
+		WorkDir    string
+		DotEnvPath string
+		Load       LoadArgs
 	}
 
 	LoadArgs struct {
@@ -48,6 +55,8 @@ func Load(args LoadArgs) {
 	if err != nil {
 		log.Debug().Msgf("%v\n", err)
 	}
+
+	Root.Meta.Load = args
 
 	err = envconfig.Process("APP", &Root)
 	if err != nil {

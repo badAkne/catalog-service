@@ -19,7 +19,7 @@ import (
 	gatewayprocessor "github.com/badAkne/catalog-service/internal/app/processor/gateway"
 	grpcprocessor "github.com/badAkne/catalog-service/internal/app/processor/grpc"
 	rprocessor "github.com/badAkne/catalog-service/internal/app/processor/http"
-	"github.com/badAkne/catalog-service/internal/app/processor/monitor"
+	mprocessor "github.com/badAkne/catalog-service/internal/app/processor/monitor"
 	pprocessor "github.com/badAkne/catalog-service/internal/app/processor/other"
 	"github.com/badAkne/catalog-service/internal/app/repository"
 	pcategory "github.com/badAkne/catalog-service/internal/app/repository/category"
@@ -179,6 +179,7 @@ func (b *Builder) buildConfig(args config.LoadArgs, injectors []func(*config.Con
 	args.EnableSimpleLog = b.cCtx.Bool("no-json")
 
 	config.Load(args)
+	mprocessor.NewSentryWriter(b.cfg.Meta.Load.Output, b.cfg.Monitor.Environment, b.cfg.Monitor.MonitorSentry)
 
 	for _, injector := range injectors {
 		if injector != nil {
@@ -214,11 +215,11 @@ func (b *Builder) BuildHandlerHttpCategory() {
 
 func (b *Builder) BuilMonitorPrometheus() {
 	b.exec(true, func(b *Builder) {
-		if !b.cfg.Monitor.Enabled {
+		if !b.cfg.Monitor.MonitorPrometheus.Enabled {
 			log.Info().Msg("Monitoring disabled")
 		}
 
-		promProc := monitor.NewPrometheusObserver()
+		promProc := mprocessor.NewPrometheusObserver()
 		b.processors = append(b.processors, promProc)
 		log.Info().Msg("Monitoring enabled")
 	})
