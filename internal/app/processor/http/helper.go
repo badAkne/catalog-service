@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/badAkne/catalog-service/internal/pkg/http/httph"
 	"github.com/gorilla/mux"
 )
 
@@ -38,4 +39,12 @@ func Loop[T any](
 			}
 		}
 	}()
+}
+
+func middlewaresToGorilla(m []httph.Middleware) []mux.MiddlewareFunc {
+	result := make([]mux.MiddlewareFunc, len(m))
+	for i, middleware := range m {
+		result[i] = mux.MiddlewareFunc(middleware)
+	}
+	return result
 }

@@ -37,6 +37,8 @@ func cmdWebServer(cCtx *cli.Context) error {
 	app.BuilderRepoCategory()
 	app.BuilderRepoProduct()
 
+	app.BuildMonitorOpenTelemetry()
+
 	app.BuildServiceCategory()
 	app.BuildServiceProduct()
 
