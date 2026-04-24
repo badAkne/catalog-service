@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"reflect"
@@ -15,6 +16,7 @@ import (
 	"github.com/badAkne/catalog-service/internal/app/handler/grpc/catalog"
 	rhealth "github.com/badAkne/catalog-service/internal/app/handler/health"
 	rproduct "github.com/badAkne/catalog-service/internal/app/handler/product"
+	"github.com/badAkne/catalog-service/internal/app/pkg/constant"
 	"github.com/badAkne/catalog-service/internal/app/processor"
 	gatewayprocessor "github.com/badAkne/catalog-service/internal/app/processor/gateway"
 	grpcprocessor "github.com/badAkne/catalog-service/internal/app/processor/grpc"
@@ -28,8 +30,11 @@ import (
 	rservice "github.com/badAkne/catalog-service/internal/app/service"
 	mcategory "github.com/badAkne/catalog-service/internal/app/service/category"
 	mproduct "github.com/badAkne/catalog-service/internal/app/service/product"
+	"github.com/badAkne/catalog-service/internal/app/util"
+	"github.com/badAkne/catalog-service/internal/pkg/http/httph"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"google.golang.org/grpc"
 )
 
@@ -57,6 +62,8 @@ type Builder struct {
 	grpcCatalogHandler *catalog.Handler
 
 	processors []processor.Processor
+
+	middlewares []httph.Middleware
 }
 
 func NewBuilder(cCtx *cli.Context) *Builder {
@@ -179,7 +186,7 @@ func (b *Builder) buildConfig(args config.LoadArgs, injectors []func(*config.Con
 	args.EnableSimpleLog = b.cCtx.Bool("no-json")
 
 	config.Load(args)
-	mprocessor.NewSentryWriter(b.cfg.Meta.Load.Output, b.cfg.Monitor.Environment, b.cfg.Monitor.MonitorSentry)
+	mprocessor.NewSentryWriter(b.cfg.Meta.Load.Output, b.cfg.Monitor.Environment, b.cfg.Monitor.Sentry)
 
 	for _, injector := range injectors {
 		if injector != nil {
@@ -215,7 +222,7 @@ func (b *Builder) BuildHandlerHttpCategory() {
 
 func (b *Builder) BuilMonitorPrometheus() {
 	b.exec(true, func(b *Builder) {
-		if !b.cfg.Monitor.MonitorPrometheus.Enabled {
+		if !b.cfg.Monitor.Prometheus.Enabled {
 			log.Info().Msg("Monitoring disabled")
 		}
 
@@ -223,6 +230,31 @@ func (b *Builder) BuilMonitorPrometheus() {
 		b.processors = append(b.processors, promProc)
 		log.Info().Msg("Monitoring enabled")
 	})
+}
+
+func (b *Builder) BuildMonitorOpenTelemetry() {
+	cfg := b.cfg.Monitor.OpenTelemetry
+	if !cfg.Enabled {
+		return
+	}
+
+	b.exec(true, func(b *Builder) {
+		proc := mprocessor.NewOpenTelemetryController(
+			b.ctx,
+			b.cfg.Monitor.Environment,
+			cfg,
+		)
+		b.processors = append(b.processors, proc)
+
+		m := otelhttp.NewMiddleware(constant.ServiceName,
+			otelhttp.WithFilter(func(r *http.Request) bool {
+				return !util.IsFilteredWithHttp(r)
+			}),
+		)
+		b.middlewares = append(b.middlewares, m)
+	})
+
+	log.Info().Msg("OpenTelemetry is initialized & enabled")
 }
 
 func (b *Builder) BuildHandlerHttpProduct() {
@@ -241,7 +273,7 @@ func (b *Builder) BuildHandlerGrpcCatalog() {
 
 func (b *Builder) BuildProcHttp() {
 	b.exec(true, func(b *Builder) {
-		procHttp := rprocessor.NewHttp(b.healthHandler, b.categoryHandler, b.productHandler, nil, b.cfg.Processor.WebServer)
+		procHttp := rprocessor.NewHttp(b.healthHandler, b.categoryHandler, b.productHandler, b.middlewares, b.cfg.Processor.WebServer)
 
 		b.processors = append(b.processors, procHttp)
 	}, b.healthHandler, b.productHandler, b.categoryHandler)

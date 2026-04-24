@@ -23,7 +23,7 @@ type httpProc struct {
 	addr   string
 }
 
-func NewHttp(hHealth rhandler.Health, hCategory rhandler.Category, hProduct rhandler.Product, _ []httph.Middleware, cfg section.ProcessorWebServer) *httpProc {
+func NewHttp(hHealth rhandler.Health, hCategory rhandler.Category, hProduct rhandler.Product, middlewares []httph.Middleware, cfg section.ProcessorWebServer) *httpProc {
 	r := mux.NewRouter()
 
 	logMW := mzerolog.NewMiddleware(
@@ -56,6 +56,8 @@ func NewHttp(hHealth rhandler.Health, hCategory rhandler.Category, hProduct rhan
 
 		makeErrorMiddleware(),
 	)
+
+	r.Use(middlewaresToGorilla(middlewares)...)
 
 	r.NotFoundHandler = http.HandlerFunc(handlerNotFound)
 
