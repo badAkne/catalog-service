@@ -31,6 +31,7 @@ import (
 	mcategory "github.com/badAkne/catalog-service/internal/app/service/category"
 	mproduct "github.com/badAkne/catalog-service/internal/app/service/product"
 	"github.com/badAkne/catalog-service/internal/app/util"
+	motel_grpc "github.com/badAkne/catalog-service/internal/pkg/grpc/motel"
 	"github.com/badAkne/catalog-service/internal/pkg/http/httph"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -63,7 +64,9 @@ type Builder struct {
 
 	processors []processor.Processor
 
-	middlewares []httph.Middleware
+	middlewares        []httph.Middleware
+	unaryInterceptors  []grpc.UnaryServerInterceptor
+	streamInterceptors []grpc.StreamServerInterceptor
 }
 
 func NewBuilder(cCtx *cli.Context) *Builder {
@@ -252,6 +255,10 @@ func (b *Builder) BuildMonitorOpenTelemetry() {
 			}),
 		)
 		b.middlewares = append(b.middlewares, m)
+
+		grpcMiddleware := motel_grpc.New()
+		b.unaryInterceptors = append(b.unaryInterceptors, grpcMiddleware.ForUnary())
+		b.streamInterceptors = append(b.streamInterceptors, grpcMiddleware.ForStream())
 	})
 
 	log.Info().Msg("OpenTelemetry is initialized & enabled")
@@ -281,7 +288,7 @@ func (b *Builder) BuildProcHttp() {
 
 func (b *Builder) BuildProcGrpc() {
 	b.exec(true, func(b *Builder) {
-		procGrpc := grpcprocessor.NewGrpc(b.grpcCatalogHandler, make([]grpc.UnaryServerInterceptor, 0), make([]grpc.StreamServerInterceptor, 0), b.cfg.Processor.Grpc)
+		procGrpc := grpcprocessor.NewGrpc(b.grpcCatalogHandler, b.unaryInterceptors, b.streamInterceptors, b.cfg.Processor.Grpc)
 
 		b.processors = append(b.processors, procGrpc)
 	}, b.grpcCatalogHandler)

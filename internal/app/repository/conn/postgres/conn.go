@@ -14,6 +14,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
+	"github.com/uptrace/bun/extra/bunotel"
 	"github.com/uptrace/bun/migrate"
 )
 
@@ -58,6 +59,11 @@ func NewConn(ctx context.Context, cfg section.RepositoryPostgres) (*Client, erro
 	sqlDB.SetMaxOpenConns(10)
 
 	rawBunDB := bun.NewDB(sqlDB, pgdialect.New(), bun.WithDiscardUnknownColumns())
+
+	rawBunDB.AddQueryHook(bunotel.NewQueryHook(
+		bunotel.WithDBName(cfg.Name),
+		bunotel.WithFormattedQueries(true),
+	))
 
 	ctx, cancelFunc := context.WithTimeout(ctx, 2*time.Second)
 	defer cancelFunc()
